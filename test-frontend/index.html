@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>好好说 · 用户路径测试台</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --text: #172033;
+      --muted: #667085;
+      --border: #dce1e8;
+      --border-strong: #c4cbd6;
+      --primary: #2459c4;
+      --primary-soft: #edf3ff;
+      --success: #177245;
+      --success-soft: #eaf7f0;
+      --warning: #9a5b08;
+      --warning-soft: #fff6e5;
+      --danger: #b42318;
+      --danger-soft: #fff0ee;
+      --purple: #6941c6;
+      --purple-soft: #f3efff;
+      --radius: 14px;
+      --radius-sm: 9px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--bg);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.55;
+    }
+
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(255, 255, 255, .96);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      max-width: 1240px;
+      margin: 0 auto;
+      min-height: 68px;
+      padding: 12px 22px;
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: white;
+      background: var(--primary);
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .brand h1 { margin: 0; font-size: 18px; }
+    .brand p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+
+    .connection-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .api-input {
+      width: 250px;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    .btn {
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 9px 13px;
+      background: var(--surface);
+      color: var(--text);
+      transition: border-color .15s, background .15s;
+    }
+    .btn:hover:not(:disabled) { border-color: #8fa4c8; background: #f9fbff; }
+    .btn-primary { background: var(--primary); border-color: var(--primary); color: white; }
+    .btn-primary:hover:not(:disabled) { background: #194aab; }
+    .btn-quiet { color: var(--muted); }
+    .btn-danger { color: var(--danger); border-color: #efb2ac; background: var(--danger-soft); }
+    .btn-wide { width: 100%; justify-content: center; }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 30px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #98a2b3; }
+    .status-pill.ok { color: var(--success); background: var(--success-soft); border-color: #b7dfca; }
+    .status-pill.ok .status-dot { background: var(--success); }
+    .status-pill.bad { color: var(--danger); background: var(--danger-soft); border-color: #f0b8b2; }
+    .status-pill.bad .status-dot { background: var(--danger); }
+
+    main { max-width: 1240px; margin: 0 auto; padding: 24px 22px 48px; }
+
+    .journey {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+    .journey-step {
+      min-height: 74px;
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .journey-step.active { border-color: #89a9ea; background: var(--primary-soft); }
+    .journey-step.done { border-color: #a8d8be; background: var(--success-soft); }
+    .step-number {
+      flex: 0 0 auto;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #eef1f5;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .active .step-number { background: var(--primary); color: white; }
+    .done .step-number { background: var(--success); color: white; }
+    .journey-step strong { display: block; font-size: 13px; }
+    .journey-step span { color: var(--muted); font-size: 12px; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(330px, .75fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stack { display: grid; gap: 16px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .card-header h2 { margin: 0; font-size: 16px; }
+    .card-header p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+
+    .mode-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+    .mode-tab {
+      padding: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+    }
+    .mode-tab.selected { color: var(--primary); background: var(--primary-soft); border-color: #a8bfee; font-weight: 600; }
+
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 7px; }
+    .hint { color: var(--muted); font-size: 12px; margin-top: 7px; }
+    textarea, select, .text-input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 11px 12px;
+      color: var(--text);
+      background: var(--surface);
+      outline: none;
+    }
+    textarea:focus, select:focus, .text-input:focus, .api-input:focus { border-color: #7398e4; box-shadow: 0 0 0 3px #edf3ff; }
+    textarea { min-height: 128px; resize: vertical; }
+
+    .preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
+    .preset { padding: 6px 9px; font-size: 12px; color: var(--primary); border: 1px solid #b7c9ef; background: var(--primary-soft); border-radius: 999px; }
+
+    .upload {
+      border: 1px dashed #aeb8c6;
+      border-radius: var(--radius-sm);
+      padding: 22px;
+      text-align: center;
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .upload input { max-width: 100%; }
+    .image-preview { margin-top: 12px; max-height: 240px; max-width: 100%; border-radius: 8px; border: 1px solid var(--border); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .actions { display: flex; gap: 9px; margin-top: 15px; flex-wrap: wrap; }
+
+    .call-state {
+      display: none;
+      margin-top: 13px;
+      padding: 11px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+    }
+    .call-state.show { display: block; }
+    .call-state.loading { color: var(--primary); background: var(--primary-soft); }
+    .call-state.success { color: var(--success); background: var(--success-soft); }
+    .call-state.error { color: var(--danger); background: var(--danger-soft); }
+
+    .result-empty {
+      min-height: 120px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+    }
+    .result-block { display: none; }
+    .result-block.show { display: block; }
+
+    .claim-editor {
+      border: 1px solid #a8bfee;
+      background: var(--primary-soft);
+      border-radius: var(--radius-sm);
+      padding: 13px;
+      margin-bottom: 13px;
+    }
+    .claim-editor textarea { min-height: 84px; background: white; }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+    .tag { padding: 5px 8px; border-radius: 999px; background: var(--warning-soft); color: var(--warning); font-size: 12px; }
+
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-bottom: 14px; }
+    .metric { padding: 11px; border-radius: var(--radius-sm); background: var(--surface-soft); }
+    .metric span { display: block; color: var(--muted); font-size: 11px; }
+    .metric strong { display: block; margin-top: 2px; font-size: 14px; }
+
+    .verdict {
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-bottom: 12px;
+      background: var(--warning-soft);
+      border-left: 4px solid #d08a1c;
+    }
+    .verdict.credible { background: var(--success-soft); border-color: var(--success); }
+    .verdict.uncertain { background: var(--surface-soft); border-color: #7d8998; }
+    .verdict h3 { margin: 0 0 6px; font-size: 15px; }
+    .verdict p { margin: 0; }
+
+    .communication { display: grid; gap: 8px; margin: 12px 0; }
+    .speech { border-left: 3px solid #a98ce4; background: var(--purple-soft); padding: 10px 12px; border-radius: 0 8px 8px 0; }
+    .speech b { color: var(--purple); font-size: 12px; }
+    .speech p { margin: 4px 0 0; }
+
+    .sources { display: grid; gap: 8px; }
+    .source { padding: 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+    .source a { color: var(--primary); text-decoration: none; font-weight: 600; }
+    .source small { display: block; color: var(--muted); margin: 4px 0; }
+    .source p { margin: 5px 0 0; font-size: 12px; }
+
+    .peace-card {
+      border: 1px solid #9ecdb5;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #fbfffd;
+    }
+    .peace-card-head { padding: 17px 18px; color: white; background: var(--success); }
+    .peace-card-head h3 { margin: 0; font-size: 18px; }
+    .peace-card-body { padding: 18px; display: grid; gap: 13px; }
+    .peace-line { padding-bottom: 12px; border-bottom: 1px solid #d8eee2; }
+    .peace-line:last-child { border-bottom: 0; padding-bottom: 0; }
+    .peace-line span { display: block; color: var(--success); font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+    .peace-line p { margin: 0; font-size: 15px; }
+    .medical { color: var(--muted); font-size: 11px; text-align: center; }
+
+    .debug-panel { position: sticky; top: 86px; }
+    .debug-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 9px; margin-bottom: 11px; }
+    .debug-tab { padding: 6px 9px; border: 0; background: transparent; color: var(--muted); }
+    .debug-tab.selected { color: var(--primary); background: var(--primary-soft); border-radius: 7px; }
+    pre {
+      margin: 0;
+      max-height: 560px;
+      overflow: auto;
+      padding: 13px;
+      border-radius: var(--radius-sm);
+      background: #172033;
+      color: #e7edf7;
+      font: 12px/1.55 Consolas, "SFMono-Regular", monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .log-list { display: grid; gap: 8px; max-height: 560px; overflow: auto; }
+    .log-item { padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; }
+    .log-item strong { display: flex; justify-content: space-between; gap: 8px; }
+    .log-item p { margin: 5px 0 0; color: var(--muted); }
+
+    .hidden { display: none !important; }
+    .spinner {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      border: 2px solid #afc4ee;
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      vertical-align: -2px;
+      margin-right: 6px;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 920px) {
+      .layout { grid-template-columns: 1fr; }
+      .debug-panel { position: static; }
+      .journey { grid-template-columns: 1fr 1fr; }
+      .header-inner { align-items: flex-start; }
+      .connection-bar { max-width: 55%; }
+    }
+
+    @media (max-width: 620px) {
+      .header-inner { flex-direction: column; }
+      .connection-bar { max-width: none; width: 100%; justify-content: flex-start; }
+      .api-input { width: 100%; }
+      .journey, .form-grid, .metrics { grid-template-columns: 1fr; }
+      main { padding: 16px 12px 32px; }
+      .mode-tabs { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-mark">说</div>
+        <div>
+          <h1>好好说 · 用户路径测试台</h1>
+          <p>验证内容提取、权威核验、沟通策略与安心核验卡</p>
+        </div>
+      </div>
+      <div class="connection-bar">
+        <input id="apiBase" class="api-input" value="http://127.0.0.1:9999" aria-label="后端基础地址">
+        <button id="healthBtn" class="btn">检查连接</button>
+        <span id="healthStatus" class="status-pill"><span class="status-dot"></span>未检查</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="journey" aria-label="用户测试路径">
+      <div class="journey-step active" data-step="1"><span class="step-number">1</span><div><strong>提交内容</strong><span>文字、截图或公众号</span></div></div>
+      <div class="journey-step" data-step="2"><span class="step-number">2</span><div><strong>确认主张</strong><span>检查并允许人工修正</span></div></div>
+      <div class="journey-step" data-step="3"><span class="step-number">3</span><div><strong>权威核验</strong><span>结论、风险、来源与沟通</span></div></div>
+      <div class="journey-step" data-step="4"><span class="step-number">4</span><div><strong>安心核验卡</strong><span>长辈版或家庭群版</span></div></div>
+    </section>
+
+    <div class="layout">
+      <div class="stack">
+        <section class="card" id="inputCard">
+          <div class="card-header">
+            <div><h2>第一步：选择要核验的内容</h2><p>模拟用户从家庭群消息、截图或公众号视频进入产品</p></div>
+            <span class="status-pill">POST /api/extract</span>
+          </div>
+
+          <div class="mode-tabs">
+            <button class="mode-tab selected" data-mode="text">粘贴文字</button>
+            <button class="mode-tab" data-mode="image">上传截图</button>
+            <button class="mode-tab" data-mode="wechat_url">公众号视频</button>
+          </div>
+
+          <div id="textPanel" class="mode-panel">
+            <label for="textContent">家庭群里看到的说法</label>
+            <textarea id="textContent">震惊！隔夜菜一定会致癌，专家紧急提醒：赶紧倒掉，为了孩子和父母的健康，马上转给你爱的人！</textarea>
+            <div class="preset-row">
+              <button class="preset" data-text="震惊！隔夜菜一定会致癌，专家紧急提醒：赶紧倒掉，为了孩子和父母的健康，马上转给你爱的人！">隔夜菜</button>
+              <button class="preset" data-text="牙膏底部的黑色条代表有毒化学成分，绿色才是纯天然，买牙膏一定要看颜色。">牙膏色条</button>
+              <button class="preset" data-text="手机放在枕头边睡觉，辐射会直接致癌，必须立刻转发给家人。">手机辐射</button>
+            </div>
+          </div>
+
+          <div id="imagePanel" class="mode-panel hidden">
+            <label>家庭群截图</label>
+            <div class="upload">
+              <input id="imageFile" type="file" accept="image/png,image/jpeg,image/webp">
+              <p class="hint">图片将在浏览器内转为 Base64 后提交；不要上传包含真实姓名、头像或隐私的截图。</p>
+              <img id="imagePreview" class="image-preview hidden" alt="截图预览">
+            </div>
+          </div>
+
+          <div id="wechatPanel" class="mode-panel hidden">
+            <label for="wechatUrl">公众号文章链接</label>
+            <input id="wechatUrl" class="text-input" value="https://mp.weixin.qq.com/s/UcGLoLyd6vaROx4j18tnkg">
+            <p class="hint">该路径会读取文章、下载视频、均匀抽帧并调用视觉模型，通常需要 30–180 秒。</p>
+          </div>
+
+          <div class="actions">
+            <button id="extractBtn" class="btn btn-primary">提取核心主张</button>
+            <button id="runAllBtn" class="btn">一键跑完整流程</button>
+            <button id="resetBtn" class="btn btn-quiet">重置结果</button>
+          </div>
+          <div id="extractState" class="call-state"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div><h2>第二步：确认系统提取的主张</h2><p>用户可在核验前修正识别结果，减少误判</p></div>
+            <span class="status-pill">可人工编辑</span>
+          </div>
+          <div id="claimEmpty" class="result-empty">先完成第一步，提取结果会显示在这里。</div>
+          <div id="claimResult" class="result-block">
+            <div class="claim-editor">
+              <label for="claimText">待核验主张</label>
+              <textarea id="claimText"></textarea>
+            </div>
+            <div id="articleMeta" class="hint"></div>
+            <div><strong>识别到的话术特征</strong><div id="patternTags" class="tags"></div></div>
+            <details style="margin-top:12px">
+              <summary>查看原始证据</summary>
+              <ul id="evidenceList"></ul>
+            </details>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div><h2>第三步：设置关系语境并核验</h2><p>不是直接判“真假”，还要选择对家庭关系伤害更小的沟通方式</p></div>
+            <span class="status-pill">POST /api/verify</span>
+          </div>
+          <div class="form-grid">
+            <div>
+              <label for="target">沟通对象</label>
+              <select id="target">
+                <option value="mother">妈妈</option>
+                <option value="father">爸爸</option>
+                <option value="grandparent">祖父母 / 外祖父母</option>
+                <option value="elder">其他长辈</option>
+              </select>
+            </div>
+            <div>
+              <label for="relationshipState">当前关系状态</label>
+              <select id="relationshipState">
+                <option value="normal">关系正常</option>
+                <option value="recent_conflict">近期有冲突</option>
+                <option value="tense">比较紧张</option>
+                <option value="group_spreading">正在家庭群扩散</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions"><button id="verifyBtn" class="btn btn-primary" disabled>开始权威核验</button></div>
+          <div id="verifyState" class="call-state"></div>
+
+          <div id="verifyEmpty" class="result-empty" style="margin-top:14px">核验结果将包含可信度、风险、权威来源和沟通建议。</div>
+          <div id="verifyResult" class="result-block" style="margin-top:14px">
+            <div class="metrics">
+              <div class="metric"><span>核验结论</span><strong id="verdictMetric">—</strong></div>
+              <div class="metric"><span>风险等级</span><strong id="riskMetric">—</strong></div>
+              <div class="metric"><span>建议渠道</span><strong id="channelMetric">—</strong></div>
+            </div>
+            <div id="verdictBox" class="verdict"><h3 id="verdictTitle"></h3><p id="verifySummary"></p></div>
+            <h3>推荐沟通方式</h3>
+            <p id="channelReason" class="hint"></p>
+            <div class="communication">
+              <div class="speech"><b>先共情</b><p id="openingText"></p></div>
+              <div class="speech"><b>再说事实</b><p id="factText"></p></div>
+              <div class="speech"><b>最后给建议</b><p id="suggestionText"></p></div>
+            </div>
+            <h3>权威来源</h3>
+            <div id="sourcesList" class="sources"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div><h2>第四步：生成可以直接使用的核验卡</h2><p>将复杂报告转换为长辈更容易接受的大字短句</p></div>
+            <span class="status-pill">POST /api/card</span>
+          </div>
+          <div class="form-grid">
+            <div>
+              <label for="cardStyle">卡片风格</label>
+              <select id="cardStyle">
+                <option value="elder">给长辈的温和版本</option>
+                <option value="group_notice">家庭群中性公告</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:flex-end">
+              <button id="cardBtn" class="btn btn-primary btn-wide" disabled>生成安心核验卡</button>
+            </div>
+          </div>
+          <div id="cardState" class="call-state"></div>
+          <div id="cardEmpty" class="result-empty" style="margin-top:14px">完成核验后，可以生成长辈版或家庭群公告版。</div>
+          <div id="cardResult" class="result-block" style="margin-top:14px">
+            <article class="peace-card">
+              <div class="peace-card-head"><h3 id="cardTitle"></h3></div>
+              <div class="peace-card-body">
+                <div id="greetingRow" class="peace-line"><span>先接住关心</span><p id="cardGreeting"></p></div>
+                <div class="peace-line"><span>事实怎么说</span><p id="cardFact"></p></div>
+                <div class="peace-line"><span>具体怎么做</span><p id="cardSuggestion"></p></div>
+                <div id="selfVerifyRow" class="peace-line"><span>自己也能验证</span><p id="cardSelfVerify"></p></div>
+                <div class="peace-line"><span>温和收尾</span><p id="cardClosing"></p></div>
+                <div id="cardMedical" class="medical"></div>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <aside class="card debug-panel">
+        <div class="card-header">
+          <div><h2>接口调试信息</h2><p>查看原始 JSON、状态码与每一步耗时</p></div>
+          <button id="copyBtn" class="btn btn-quiet">复制</button>
+        </div>
+        <div class="debug-tabs">
+          <button class="debug-tab selected" data-debug="json">当前 JSON</button>
+          <button class="debug-tab" data-debug="logs">请求记录</button>
+          <button class="debug-tab" data-debug="checks">验收清单</button>
+        </div>
+        <div id="jsonDebug"><pre id="jsonOutput">等待接口调用…</pre></div>
+        <div id="logsDebug" class="hidden"><div id="logList" class="log-list"></div></div>
+        <div id="checksDebug" class="hidden">
+          <div class="log-list">
+            <label><input type="checkbox"> health 返回 200</label>
+            <label><input type="checkbox"> extract 的 claim 非空</label>
+            <label><input type="checkbox"> 用户可以修正 claim</label>
+            <label><input type="checkbox"> verify 有结论和风险</label>
+            <label><input type="checkbox"> 至少展示一个来源</label>
+            <label><input type="checkbox"> 沟通文案不冒犯长辈</label>
+            <label><input type="checkbox"> card 包含事实和建议</label>
+            <label><input type="checkbox"> 医疗免责声明可见</label>
+            <label><input type="checkbox"> 失败时可明确重试</label>
+            <label><input type="checkbox"> 视频请求结束后无临时文件残留</label>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const state = {
+      mode: "text",
+      imageData: "",
+      extraction: null,
+      verification: null,
+      card: null,
+      logs: [],
+      currentJson: null,
+      runningAll: false
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const apiBase = () => $("apiBase").value.trim().replace(/\/$/, "");
+    const escapeHtml = (value = "") => String(value).replace(/[&<>'"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[ch]);
+
+    function setJourney(step) {
+      document.querySelectorAll(".journey-step").forEach(node => {
+        const n = Number(node.dataset.step);
+        node.classList.toggle("active", n === step);
+        node.classList.toggle("done", n < step);
+      });
+    }
+
+    function setCallState(id, type, message) {
+      const node = $(id);
+      node.className = `call-state show ${type}`;
+      node.innerHTML = type === "loading" ? `<span class="spinner"></span>${escapeHtml(message)}` : escapeHtml(message);
+    }
+
+    function clearCallState(id) {
+      $(id).className = "call-state";
+      $(id).textContent = "";
+    }
+
+    function setJson(data) {
+      state.currentJson = data;
+      $("jsonOutput").textContent = JSON.stringify(data, null, 2);
+    }
+
+    function addLog({ path, method = "POST", status, duration, ok, body, error }) {
+      state.logs.unshift({ time: new Date().toLocaleTimeString(), path, method, status, duration, ok, body, error });
+      renderLogs();
+    }
+
+    function renderLogs() {
+      const list = $("logList");
+      if (!state.logs.length) {
+        list.innerHTML = '<div class="result-empty">还没有请求记录。</div>';
+        return;
+      }
+      list.innerHTML = state.logs.map(log => `
+        <div class="log-item">
+          <strong><span>${escapeHtml(log.method)} ${escapeHtml(log.path)}</span><span style="color:${log.ok ? 'var(--success)' : 'var(--danger)'}">${escapeHtml(log.status)}</span></strong>
+          <p>${escapeHtml(log.time)} · ${Math.round(log.duration)} ms${log.error ? ` · ${escapeHtml(log.error)}` : ""}</p>
+        </div>`).join("");
+    }
+
+    async function request(path, options = {}) {
+      const started = performance.now();
+      const method = options.method || "POST";
+      try {
+        const response = await fetch(`${apiBase()}${path}`, {
+          method,
+          headers: options.body ? { "Content-Type": "application/json" } : undefined,
+          body: options.body ? JSON.stringify(options.body) : undefined
+        });
+        const duration = performance.now() - started;
+        const text = await response.text();
+        let data;
+        try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+        addLog({ path, method, status: response.status, duration, ok: response.ok, body: options.body, error: response.ok ? "" : data.detail || "请求失败" });
+        setJson({ request: { method, url: `${apiBase()}${path}`, body: options.body || null }, response: { status: response.status, duration_ms: Math.round(duration), body: data } });
+        if (!response.ok) {
+          const detail = Array.isArray(data.detail) ? data.detail.map(item => item.msg).join("；") : data.detail;
+          throw new Error(detail || `HTTP ${response.status}`);
+        }
+        return { data, duration };
+      } catch (error) {
+        const duration = performance.now() - started;
+        if (!(error instanceof TypeError)) throw error;
+        addLog({ path, method, status: "网络错误", duration, ok: false, body: options.body, error: error.message });
+        setJson({ request: { method, url: `${apiBase()}${path}`, body: options.body || null }, error: error.message, suggestion: "确认后端已启动、地址正确，并检查浏览器控制台。" });
+        throw new Error(`无法连接后端：${error.message}`);
+      }
+    }
+
+    async function checkHealth() {
+      const pill = $("healthStatus");
+      pill.className = "status-pill";
+      pill.innerHTML = '<span class="status-dot"></span>检查中';
+      try {
+        const { data, duration } = await request("/health", { method: "GET" });
+        pill.className = "status-pill ok";
+        pill.innerHTML = `<span class="status-dot"></span>已连接 · ${Math.round(duration)} ms`;
+        const details = [`FFmpeg ${data.ffmpeg_available ? "可用" : "不可用"}`, data.mock_mode ? "Mock 模式" : "真实模式"];
+        pill.title = details.join("；");
+        localStorage.setItem("haohuoshuo_api_base", apiBase());
+      } catch (error) {
+        pill.className = "status-pill bad";
+        pill.innerHTML = '<span class="status-dot"></span>连接失败';
+        pill.title = error.message;
+      }
+    }
+
+    function extractPayload() {
+      if (state.mode === "text") {
+        const content = $("textContent").value.trim();
+        if (!content) throw new Error("请先输入要核验的文字");
+        return { type: "text", content };
+      }
+      if (state.mode === "image") {
+        if (!state.imageData) throw new Error("请先选择一张截图");
+        return { type: "image", content: state.imageData };
+      }
+      const content = $("wechatUrl").value.trim();
+      if (!content) throw new Error("请输入公众号文章链接");
+      return { type: "wechat_url", content };
+    }
+
+    async function runExtract() {
+      clearCallState("verifyState");
+      clearCallState("cardState");
+      let payload;
+      try { payload = extractPayload(); } catch (error) {
+        setCallState("extractState", "error", error.message);
+        throw error;
+      }
+      $("extractBtn").disabled = true;
+      $("runAllBtn").disabled = true;
+      const waitingText = state.mode === "wechat_url" ? "正在读取公众号、下载视频、均匀抽帧并分析内容，请不要关闭页面…" : "正在提取内容中的核心健康主张…";
+      setCallState("extractState", "loading", waitingText);
+      setJourney(1);
+      try {
+        const { data, duration } = await request("/api/extract", { body: payload });
+        state.extraction = data;
+        state.verification = null;
+        state.card = null;
+        renderExtraction(data);
+        resetVerificationView();
+        resetCardView();
+        setCallState("extractState", "success", `提取成功，耗时 ${(duration / 1000).toFixed(1)} 秒。请确认或修改主张后继续。`);
+        setJourney(2);
+        return data;
+      } catch (error) {
+        setCallState("extractState", "error", error.message);
+        throw error;
+      } finally {
+        $("extractBtn").disabled = false;
+        $("runAllBtn").disabled = false;
+      }
+    }
+
+    function renderExtraction(data) {
+      $("claimEmpty").classList.add("hidden");
+      $("claimResult").classList.add("show");
+      $("claimText").value = data.claim || "";
+      $("verifyBtn").disabled = !data.claim;
+      $("patternTags").innerHTML = (data.patterns || []).length ? data.patterns.map(item => `<span class="tag">${escapeHtml(item)}</span>`).join("") : '<span class="hint">未识别到明显话术特征</span>';
+      $("evidenceList").innerHTML = (data.original_evidence || []).map(item => `<li>${escapeHtml(item)}</li>`).join("") || "<li>无原始证据</li>";
+      const meta = [];
+      if (data.article_title) meta.push(`文章：${data.article_title}`);
+      if (data.video_id) meta.push(`视频 ID：${data.video_id}`);
+      $("articleMeta").textContent = meta.join(" · ");
+    }
+
+    async function runVerify() {
+      const claim = $("claimText").value.trim();
+      if (claim.length < 2) {
+        setCallState("verifyState", "error", "请确认待核验主张至少包含 2 个字符");
+        throw new Error("主张内容过短");
+      }
+      const payload = {
+        claim,
+        target: $("target").value,
+        relationship_state: $("relationshipState").value
+      };
+      $("verifyBtn").disabled = true;
+      setCallState("verifyState", "loading", "正在搜索权威来源、交叉比对并生成沟通策略…");
+      setJourney(3);
+      try {
+        const { data, duration } = await request("/api/verify", { body: payload });
+        state.verification = data;
+        state.card = null;
+        renderVerification(data);
+        resetCardView();
+        $("cardBtn").disabled = false;
+        setCallState("verifyState", "success", `核验完成，耗时 ${(duration / 1000).toFixed(1)} 秒。`);
+        setJourney(3);
+        return data;
+      } catch (error) {
+        setCallState("verifyState", "error", error.message);
+        throw error;
+      } finally {
+        $("verifyBtn").disabled = !state.extraction;
+      }
+    }
+
+    function verdictLabel(value) {
+      return ({ credible: "较可信", misleading: "容易误导", uncertain: "证据不足" })[value] || value || "未知";
+    }
+    function riskLabel(value) {
+      return ({ low: "低", medium: "中", high: "高" })[value] || value || "未知";
+    }
+    function channelLabel(value) {
+      return ({ private_chat: "私聊", family_group: "家庭群回应", via_relative: "请亲属转达", no_reply: "暂不回应" })[value] || value || "未知";
+    }
+
+    function renderVerification(data) {
+      $("verifyEmpty").classList.add("hidden");
+      $("verifyResult").classList.add("show");
+      $("verdictMetric").textContent = verdictLabel(data.verdict);
+      $("riskMetric").textContent = riskLabel(data.risk_level);
+      $("channelMetric").textContent = channelLabel(data.communication?.channel);
+      $("verdictTitle").textContent = `结论：${verdictLabel(data.verdict)}`;
+      $("verifySummary").textContent = data.summary || "";
+      $("verdictBox").className = `verdict ${data.verdict || ""}`;
+      $("channelReason").textContent = data.communication?.reason || "";
+      $("openingText").textContent = data.communication?.opening || "";
+      $("factText").textContent = data.communication?.fact || "";
+      $("suggestionText").textContent = data.communication?.suggestion || "";
+      $("sourcesList").innerHTML = (data.sources || []).length ? data.sources.map(source => `
+        <div class="source">
+          <a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.title)}</a>
+          <small>${escapeHtml(source.publisher || "未知发布者")}</small>
+          <p>${escapeHtml(source.evidence || "")}</p>
+        </div>`).join("") : '<div class="hint">没有返回可展示的权威来源，因此结论应保持谨慎。</div>';
+    }
+
+    async function runCard() {
+      if (!state.verification) {
+        setCallState("cardState", "error", "请先完成权威核验");
+        throw new Error("缺少核验结果");
+      }
+      const report = state.verification;
+      const payload = {
+        claim: report.claim,
+        verdict: report.verdict,
+        risk_level: report.risk_level,
+        summary: report.summary,
+        target: $("target").value,
+        style: $("cardStyle").value,
+        sources: report.sources || []
+      };
+      $("cardBtn").disabled = true;
+      setCallState("cardState", "loading", "正在把复杂报告改写成温和、易读的安心核验卡…");
+      setJourney(4);
+      try {
+        const { data, duration } = await request("/api/card", { body: payload });
+        state.card = data;
+        renderCard(data);
+        setCallState("cardState", "success", `核验卡生成成功，耗时 ${(duration / 1000).toFixed(1)} 秒。`);
+        setJourney(4);
+        return data;
+      } catch (error) {
+        setCallState("cardState", "error", error.message);
+        throw error;
+      } finally {
+        $("cardBtn").disabled = !state.verification;
+      }
+    }
+
+    function renderCard(data) {
+      $("cardEmpty").classList.add("hidden");
+      $("cardResult").classList.add("show");
+      $("cardTitle").textContent = data.title || "安心核验卡";
+      $("cardGreeting").textContent = data.greeting || "";
+      $("greetingRow").classList.toggle("hidden", !data.greeting);
+      $("cardFact").textContent = data.fact || "";
+      $("cardSuggestion").textContent = data.suggestion || "";
+      $("cardSelfVerify").textContent = data.self_verify || "";
+      $("selfVerifyRow").classList.toggle("hidden", !data.self_verify);
+      $("cardClosing").textContent = data.closing || "";
+      $("cardMedical").textContent = data.medical_notice || "";
+    }
+
+    async function runAll() {
+      state.runningAll = true;
+      try {
+        await runExtract();
+        await runVerify();
+        await runCard();
+        $("cardResult").scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        state.runningAll = false;
+      }
+    }
+
+    function resetVerificationView() {
+      $("verifyEmpty").classList.remove("hidden");
+      $("verifyResult").classList.remove("show");
+      $("cardBtn").disabled = true;
+    }
+
+    function resetCardView() {
+      $("cardEmpty").classList.remove("hidden");
+      $("cardResult").classList.remove("show");
+    }
+
+    function resetAll() {
+      state.extraction = null;
+      state.verification = null;
+      state.card = null;
+      $("claimEmpty").classList.remove("hidden");
+      $("claimResult").classList.remove("show");
+      $("verifyBtn").disabled = true;
+      resetVerificationView();
+      resetCardView();
+      ["extractState", "verifyState", "cardState"].forEach(clearCallState);
+      setJourney(1);
+      setJson({ message: "已重置页面结果，请开始新的测试。" });
+    }
+
+    document.querySelectorAll(".mode-tab").forEach(button => button.addEventListener("click", () => {
+      state.mode = button.dataset.mode;
+      document.querySelectorAll(".mode-tab").forEach(node => node.classList.toggle("selected", node === button));
+      $("textPanel").classList.toggle("hidden", state.mode !== "text");
+      $("imagePanel").classList.toggle("hidden", state.mode !== "image");
+      $("wechatPanel").classList.toggle("hidden", state.mode !== "wechat_url");
+    }));
+
+    document.querySelectorAll(".preset").forEach(button => button.addEventListener("click", () => { $("textContent").value = button.dataset.text; }));
+
+    $("imageFile").addEventListener("change", event => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      if (file.size > 4.2 * 1024 * 1024) {
+        setCallState("extractState", "error", "图片过大。考虑到 Base64 膨胀和云函数限制，请选择小于 4.2 MB 的图片。");
+        event.target.value = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        state.imageData = reader.result;
+        $("imagePreview").src = reader.result;
+        $("imagePreview").classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.querySelectorAll(".debug-tab").forEach(button => button.addEventListener("click", () => {
+      document.querySelectorAll(".debug-tab").forEach(node => node.classList.toggle("selected", node === button));
+      ["json", "logs", "checks"].forEach(name => $(`${name}Debug`).classList.toggle("hidden", name !== button.dataset.debug));
+    }));
+
+    $("copyBtn").addEventListener("click", async () => {
+      const active = document.querySelector(".debug-tab.selected")?.dataset.debug;
+      const content = active === "json" ? $("jsonOutput").textContent : active === "logs" ? JSON.stringify(state.logs, null, 2) : "请在页面中逐项勾选验收清单";
+      try { await navigator.clipboard.writeText(content); $("copyBtn").textContent = "已复制"; setTimeout(() => $("copyBtn").textContent = "复制", 1200); } catch { $("copyBtn").textContent = "复制失败"; }
+    });
+
+    $("healthBtn").addEventListener("click", checkHealth);
+    $("extractBtn").addEventListener("click", () => runExtract().catch(() => {}));
+    $("verifyBtn").addEventListener("click", () => runVerify().catch(() => {}));
+    $("cardBtn").addEventListener("click", () => runCard().catch(() => {}));
+    $("runAllBtn").addEventListener("click", runAll);
+    $("resetBtn").addEventListener("click", resetAll);
+    $("apiBase").addEventListener("change", () => localStorage.setItem("haohuoshuo_api_base", apiBase()));
+
+    const savedBase = localStorage.getItem("haohuoshuo_api_base");
+    if (savedBase) $("apiBase").value = savedBase;
+    renderLogs();
+    checkHealth();
+  </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# ===== Secrets（绝不提交）=====
+.env
+
+# ===== Python =====
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ===== 本地大文件 / 测试媒体 =====
+downloaded_video.mp4
+*.mp4
+
+# ===== WorkBuddy 内部数据 =====
+.workbuddy/
+
+# ===== 系统 / 编辑器 =====
+.DS_Store
+.idea/
+.vscode/
