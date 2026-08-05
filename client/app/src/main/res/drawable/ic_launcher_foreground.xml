@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="2.5"
+        android:scaleY="2.5"
+        android:translateX="24"
+        android:translateY="24">
+        <!-- Megaphone-off icon (lucide) -->
+        <path
+            android:pathData="M9.26 9.26 3 11v3l14.14 3.14"
+            android:strokeColor="#ffffff"
+            android:strokeWidth="1.08"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"/>
+        <path
+            android:pathData="M21 15.34V6l-7.31 2.03"
+            android:strokeColor="#ffffff"
+            android:strokeWidth="1.08"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"/>
+        <path
+            android:pathData="M11.6 16.8a3 3 0 1 1-5.8-1.6"
+            android:strokeColor="#ffffff"
+            android:strokeWidth="1.08"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"/>
+        <!-- Diagonal "off" line -->
+        <path
+            android:pathData="M2 2L22 22"
+            android:strokeColor="#ffffff"
+            android:strokeWidth="1.08"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"/>
+    </group>
+</vector>

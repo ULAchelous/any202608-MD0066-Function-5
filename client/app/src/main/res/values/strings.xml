@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">MythBuster</string>
+    <string name="ui.activity.request.name">信息分析</string>
+    <string name="net_backend_url">http://120.79.170.218:7712</string>
+</resources>
