@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E8602F"/>
+      <stop offset=".55" stop-color="#D8491B"/>
+      <stop offset="1" stop-color="#BC3C11"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".22"/>
+      <stop offset=".45" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bubble" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFDF8"/>
+      <stop offset="1" stop-color="#F9EDDB"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 底板：暖橙渐变圆角方块 -->
+  <rect width="512" height="512" rx="114" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="114" fill="url(#sheen)"/>
+
+  <!-- 对话气泡：奶油色，带柔和渐变 -->
+  <path d="M256 116c-88 0-150 53-150 120 0 37 20 69 53 91-4 20-13 38-28 52-4 4-3 10 2 12
+           33 9 67 1 92-17 10 2 20 3 31 3 88 0 150-53 150-120S344 116 256 116z"
+        fill="url(#bubble)"/>
+
+  <!-- 核验对勾：圆润的绿色勾 -->
+  <path d="M197 228l37 37 80-82" fill="none" stroke="#2F7D5A" stroke-width="34"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- 点缀星芒：精致感 -->
+  <path d="M386 128c1.8 8 5.2 11.4 13 13-7.8 1.6-11.2 5-13 13-1.8-8-5.2-11.4-13-13 7.8-1.6 11.2-5 13-13z"
+        fill="#FFF7EF" opacity=".9"/>
+  <path d="M412 176c1.2 5.4 3.6 7.8 9 9-5.4 1.2-7.8 3.6-9 9-1.2-5.4-3.6-7.8-9-9 5.4-1.2 7.8-3.6 9-9z"
+        fill="#FFF7EF" opacity=".6"/>
+</svg>

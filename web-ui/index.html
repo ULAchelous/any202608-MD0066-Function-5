@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#FAF4EA">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>好好说 · 安心核验</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js" defer></script>
+<style>
+  /* ============ 设计基座 ============ */
+  :root{
+    --cream:#FAF4EA; --paper:#FFFDF8; --soft:#F4EBDD;
+    --ink:#1C1512; --ink-2:#4A3E35; --muted:#8C7A6B; --faint:#C4B5A3;
+    --line:#E7DAC6; --line-strong:#D8C7AE;
+    --accent:#D8491B; --accent-deep:#B23A12; --accent-soft:#FBE9E0;
+    --green:#2F7D5A; --green-soft:#E5F1EA;
+    --blue:#2F5FA8; --blue-soft:#E9EFF8;
+    --amber:#A87B17; --amber-soft:#F8F0DC;
+    --red:#C23B33; --red-soft:#F9E9E7;
+    --ease:cubic-bezier(.22,1,.36,1);
+    --serif:"Songti SC","STSong","Noto Serif SC","SimSun",serif;
+    --sans:"PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--cream); color:var(--ink); font-family:var(--sans);
+    font-size:16px; line-height:1.7; max-width:520px; margin:0 auto;
+    min-height:100vh; padding-bottom:80px; overflow-x:hidden;
+    touch-action:pan-y;   /* 垂直滚动交给浏览器，横向拖动由滑页手势接管 */
+  }
+  /* 胶片颗粒 */
+  body::after{content:"";position:fixed;inset:0;z-index:120;pointer-events:none;opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");}
+  button,input,textarea,select{font:inherit;color:inherit}
+  button{cursor:pointer;border:0;background:none;padding:0}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  a{color:var(--blue)}
+  ::selection{background:var(--accent);color:#fff}
+
+  .lucide{width:1.15em;height:1.15em;stroke-width:2;vertical-align:-0.22em}
+
+  /* ============ 顶栏 ============ */
+  .topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:12px;
+    padding:16px 20px 14px;background:rgba(250,244,234,.86);backdrop-filter:blur(14px) saturate(1.3);
+    border-bottom:1px solid var(--line)}
+  .logo{width:40px;height:40px;border-radius:10px;flex:none;display:grid;place-items:center;
+    overflow:hidden;box-shadow:0 4px 14px rgba(184,58,15,.35);transition:transform .5s var(--ease)}
+  .logo svg{width:100%;height:100%;display:block}
+  .logo:active{transform:rotate(-8deg) scale(.94)}
+  .wordmark{line-height:1.25}
+  .wordmark b{font-family:var(--serif);font-size:19px;letter-spacing:2px}
+  .wordmark span{display:block;font-size:11px;color:var(--muted);letter-spacing:1.5px}
+  .icon-btn{margin-left:auto;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+    border:1px solid var(--line);background:var(--paper);color:var(--ink-2);transition:.3s var(--ease)}
+  .icon-btn:active{transform:scale(.92)}
+  .icon-btn + .icon-btn{margin-left:8px}
+  .topbar .icon-btn:first-of-type{margin-left:auto}
+  .topbar .icon-btn + .icon-btn{margin-left:8px}
+
+  /* ============ 步骤条（可点击回退） ============ */
+  .steps{display:flex;padding:18px 20px 6px;gap:0}
+  .step{flex:1;text-align:left;position:relative;padding:0 4px 14px;transition:.3s;
+    border-bottom:2px solid var(--line)}
+  .step .num{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--faint);
+    display:block;line-height:1;transition:.4s var(--ease)}
+  .step .lbl{font-size:11px;color:var(--faint);letter-spacing:1px;display:block;margin-top:5px;transition:.4s}
+  .step::after{content:"";position:absolute;left:0;bottom:-2px;height:2px;width:0;
+    background:var(--accent);transition:width .6s var(--ease)}
+  .step.done::after{background:var(--green);width:100%}
+  .step.done .num{color:var(--green)}
+  .step.done .lbl{color:var(--green)}
+  .step.active::after{width:100%}
+  .step.active .num{color:var(--accent);transform:translateY(-2px)}
+  .step.active .lbl{color:var(--accent-deep);font-weight:600}
+  .step.clickable{cursor:pointer}
+  .step.clickable:active .num{transform:scale(.88)}
+  .step.locked{cursor:not-allowed}
+
+  /* ============ 布局与卡片 ============ */
+  .page{padding:20px 20px 0}
+  .hidden{display:none!important}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:26px;
+    padding:26px 24px;margin-bottom:18px;box-shadow:0 1px 2px rgba(60,40,20,.04),0 12px 32px -18px rgba(60,40,20,.12)}
+  .eyebrow{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:3px;
+    color:var(--accent);font-weight:700;text-transform:uppercase;margin-bottom:12px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+  .display{font-family:var(--serif);font-weight:700;font-size:clamp(30px,8.4vw,42px);
+    line-height:1.22;letter-spacing:1px;margin:0 0 10px}
+  .display em{font-style:normal;color:var(--accent);position:relative}
+  .lead{font-size:14px;color:var(--muted);margin:0 0 20px;max-width:34em}
+
+  /* 进场动效 */
+  .reveal{opacity:0;transform:translateY(26px)}
+  .reveal.in{opacity:1;transform:none;transition:opacity .9s var(--ease),transform .9s var(--ease)}
+  .reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}
+  .reveal.d3{transition-delay:.24s}.reveal.d4{transition-delay:.32s}
+
+  /* 跑马灯 */
+  .marquee{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:9px 0;margin:0 -20px 20px;white-space:nowrap}
+  .marquee-inner{display:inline-block;animation:mq 22s linear infinite;
+    font-family:var(--serif);font-size:13px;letter-spacing:4px;color:var(--muted)}
+  @keyframes mq{to{transform:translateX(-50%)}}
+
+  /* ============ 按钮 ============ */
+  .btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+    padding:17px 20px;border-radius:999px;font-weight:600;font-size:16px;
+    transition:transform .35s var(--ease),box-shadow .35s var(--ease),background .3s}
+  .btn:active{transform:scale(.965)}
+  .btn-primary{background:var(--ink);color:var(--cream);box-shadow:0 10px 26px -10px rgba(28,21,18,.5)}
+  .btn-primary:active{background:var(--accent-deep)}
+  .btn-accent{background:var(--accent);color:#fff;box-shadow:0 10px 26px -10px rgba(216,73,27,.55)}
+  .btn-ghost{background:transparent;border:1.5px solid var(--line-strong);color:var(--ink)}
+  .btn-soft{background:var(--soft);color:var(--ink-2)}
+
+  /* ============ 输入区 ============ */
+  .seg{display:flex;background:var(--soft);border-radius:999px;padding:5px;margin-bottom:18px;position:relative}
+  .seg-glider{position:absolute;top:5px;bottom:5px;left:5px;width:calc((100% - 10px)/3);
+    background:var(--paper);border-radius:999px;box-shadow:0 3px 10px rgba(60,40,20,.12);
+    transition:transform .45s var(--ease)}
+  .seg button{flex:1;position:relative;z-index:1;padding:10px 4px;font-size:13.5px;color:var(--muted);
+    display:flex;align-items:center;justify-content:center;gap:6px;transition:color .3s}
+  .seg button.active{color:var(--ink);font-weight:600}
+  textarea{width:100%;min-height:130px;border:1.5px solid var(--line);border-radius:18px;
+    padding:15px 16px;background:var(--cream);resize:vertical;font-size:15px;transition:.3s}
+  textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent);
+    box-shadow:0 0 0 4px var(--accent-soft);background:var(--paper)}
+  .upload-box{border:1.5px dashed var(--line-strong);border-radius:18px;padding:34px 16px;
+    text-align:center;color:var(--muted);font-size:14px;background:var(--cream);
+    display:flex;flex-direction:column;align-items:center;gap:10px;transition:.3s;cursor:pointer}
+  .upload-box:active{border-color:var(--accent);background:var(--accent-soft)}
+  .upload-box .lucide{width:30px;height:30px;color:var(--accent)}
+  .upload-box img{max-width:100%;border-radius:12px}
+
+  /* ============ 加载 ============ */
+  .loading{display:flex;flex-direction:column;align-items:center;gap:18px;padding:38px 10px}
+  .ring{width:52px;height:52px;border-radius:50%;position:relative;
+    background:conic-gradient(var(--accent) 0 25%,transparent 25% 100%);
+    -webkit-mask:radial-gradient(farthest-side,transparent 62%,#000 63%);
+    mask:radial-gradient(farthest-side,transparent 62%,#000 63%);
+    animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading p{color:var(--muted);font-size:14px;margin:0;letter-spacing:1px}
+  .status-seq{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px}
+  .status-item{display:flex;align-items:center;gap:11px;font-size:14px;color:var(--faint);
+    transition:.4s var(--ease);transform:translateX(0)}
+  .status-item .s-ico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+    background:var(--soft);color:var(--faint);flex:none;transition:.4s var(--ease)}
+  .status-item.on{color:var(--ink);font-weight:600;transform:translateX(4px)}
+  .status-item.on .s-ico{background:var(--accent-soft);color:var(--accent)}
+  .status-item.ok{color:var(--green)}
+  .status-item.ok .s-ico{background:var(--green-soft);color:var(--green)}
+
+  /* ============ 等待进度条 + 轮播贴士 ============ */
+  .wait-ui{width:100%;max-width:340px;display:flex;flex-direction:column;gap:11px}
+  .wait-row{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted);letter-spacing:1px}
+  .wait-pct{font-weight:700;font-size:13px;color:var(--accent);font-variant-numeric:tabular-nums}
+  .wait-track{height:8px;border-radius:999px;background:var(--soft);overflow:hidden}
+  .wait-fill{height:100%;width:0%;border-radius:999px;position:relative;overflow:hidden;
+    background:linear-gradient(90deg,var(--accent),var(--accent-deep));
+    transition:width .22s ease-out}
+  .wait-fill::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+    animation:wait-shine 1.3s linear infinite}
+  @keyframes wait-shine{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+  .wait-tip{display:flex;align-items:flex-start;gap:9px;background:var(--cream);
+    border:1px solid var(--line);border-radius:14px;padding:11px 13px;
+    font-size:13px;color:var(--ink-2);line-height:1.65;min-height:64px;text-align:left}
+  .wait-tip .lucide{color:var(--accent);flex:none;margin-top:3px}
+  .wait-tip-text{transition:opacity .3s ease}
+  .wait-tip-text.fade{opacity:0}
+
+  /* ============ 结果 ============ */
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;
+    font-size:13px;font-weight:600}
+  .pill-red{background:var(--red-soft);color:var(--red)}
+  .pill-amber{background:var(--amber-soft);color:var(--amber)}
+  .pill-green{background:var(--green-soft);color:var(--green)}
+  .pill-blue{background:var(--blue-soft);color:var(--blue)}
+  .claim-text{font-family:var(--serif);font-size:22px;font-weight:700;line-height:1.55;margin:10px 0 6px}
+  .claim-text::before{content:"“";color:var(--accent)}
+  .claim-text::after{content:"”";color:var(--accent)}
+  .tag{display:inline-flex;align-items:center;gap:5px;background:var(--soft);color:var(--ink-2);
+    border-radius:8px;padding:4px 10px;font-size:12px;margin:4px 6px 0 0}
+  .claim-options{display:grid;gap:10px;margin:14px 0}
+  .claim-option{width:100%;text-align:left;border:1.5px solid var(--line);border-radius:17px;
+    padding:14px 15px;background:var(--cream);display:grid;grid-template-columns:26px 1fr;gap:10px;
+    transition:.3s var(--ease)}
+  .claim-option:active{transform:scale(.985)}
+  .claim-option.selected{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 3px rgba(216,73,27,.08)}
+  .claim-radio{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--faint);display:grid;place-items:center;margin-top:1px}
+  .claim-option.selected .claim-radio{border-color:var(--accent);background:var(--accent);color:#fff}
+  .claim-option .co-text{font-size:14.5px;font-weight:600;line-height:1.55}
+  .claim-option .co-evidence{font-size:12px;color:var(--muted);line-height:1.5;margin-top:5px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .risk-dot{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;color:var(--muted);margin-top:6px}
+  .source-item{border:1px solid var(--line);border-radius:17px;padding:15px 16px;font-size:14px;margin:10px 0;background:var(--cream)}
+  .source-head{display:flex;align-items:flex-start;gap:8px}
+  .source-head b{flex:1;line-height:1.5}
+  .authority{flex:none;display:inline-flex;padding:3px 8px;border-radius:999px;background:var(--blue-soft);color:var(--blue);font-size:10.5px;font-weight:700}
+  .source-item .pub{font-size:11.5px;color:var(--muted);margin:5px 0;display:flex;gap:9px;flex-wrap:wrap}
+  .evidence-quote{font-size:13px;color:var(--ink-2);background:var(--paper);border-left:3px solid var(--accent);
+    border-radius:0 10px 10px 0;padding:10px 11px;margin:9px 0;line-height:1.6}
+  .source-item a{word-break:break-all;font-size:12.5px;display:inline-flex;gap:5px;align-items:center}
+  .source-toggle{font-size:12px;color:var(--accent);display:flex;align-items:center;gap:5px;margin-top:7px}
+  .notice{background:var(--amber-soft);border:1px solid #EBDCB8;color:#7A5E14;
+    border-radius:14px;padding:13px 15px;font-size:13px;margin-top:14px;
+    display:flex;gap:9px;align-items:flex-start}
+  .notice .lucide{flex:none;margin-top:2px}
+
+  /* ============ 表单 ============ */
+  .field{margin-bottom:16px}
+  .field label{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;
+    margin-bottom:8px;letter-spacing:1px;color:var(--ink-2)}
+  select,input[type=text]{width:100%;padding:14px 15px;border:1.5px solid var(--line);
+    border-radius:15px;background:var(--cream);font-size:15px;appearance:none}
+  .select-wrap{position:relative}
+  .select-wrap::after{content:"";position:absolute;right:16px;top:50%;width:8px;height:8px;
+    border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);
+    transform:translateY(-70%) rotate(45deg);pointer-events:none}
+
+  /* ============ 方案输出 ============ */
+  .plan-block{border-radius:18px;padding:18px;margin-bottom:14px;font-size:15px;position:relative;overflow:hidden}
+  .plan-block .h{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;
+    letter-spacing:2px;margin-bottom:8px}
+  .plan-block .h .lucide{width:18px;height:18px}
+  .plan-empathy{background:var(--accent-soft)}
+  .plan-empathy .h{color:var(--accent-deep)}
+  .plan-fact{background:var(--blue-soft)}
+  .plan-fact .h{color:var(--blue)}
+  .plan-advice{background:var(--green-soft)}
+  .plan-advice .h{color:var(--green)}
+  .cursor{display:inline-block;width:2px;height:1.05em;background:var(--accent);
+    vertical-align:-2px;animation:blink .8s step-end infinite}
+  @keyframes blink{50%{opacity:0}}
+  .channel-chip{display:inline-flex;align-items:center;gap:7px;background:var(--ink);color:var(--cream);
+    border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600;margin-bottom:16px}
+  .channel-reason{font-size:13px;color:var(--muted);margin:-8px 0 18px}
+
+  /* ============ 长辈大字卡 ============ */
+  .elder-card{background:linear-gradient(165deg,#FFFDF7,#FCEFE0);border:2.5px solid #EFD3AC;
+    border-radius:24px;padding:28px 22px;font-size:21px;line-height:1.8;color:#3A2A1B}
+  .elder-card .ec-title{font-family:var(--serif);font-size:27px;font-weight:800;
+    color:var(--accent-deep);text-align:center;margin-bottom:16px;letter-spacing:1px}
+  .elder-card .ec-sec{margin:15px 0}
+  .elder-card .ec-label{display:inline-block;background:var(--accent);color:#fff;border-radius:8px;
+    font-size:14px;padding:3px 11px;margin-bottom:6px;font-weight:600;letter-spacing:2px}
+  .elder-card .ec-src{font-size:13.5px;color:var(--muted);border-top:1px dashed #E3C89E;
+    padding-top:11px;margin-top:16px;line-height:1.6}
+  .elder-card .ec-notice{font-size:12.5px;color:#A3907A;text-align:center;margin-top:12px}
+  .ab-pick{border:2.5px solid transparent;border-radius:27px;transition:.35s var(--ease);
+    margin-bottom:18px;cursor:pointer;padding:3px}
+  .ab-pick:active{transform:scale(.985)}
+  .ab-pick.picked{border-color:var(--green);box-shadow:0 0 0 5px var(--green-soft)}
+  .ab-pick .ab-badge{display:flex;align-items:center;justify-content:center;gap:7px;
+    font-size:13px;font-weight:700;color:var(--muted);padding:9px 0 11px;letter-spacing:2px}
+  .ab-pick.picked .ab-badge{color:var(--green)}
+  .share-tip{background:var(--green-soft);border-radius:14px;padding:14px 16px;font-size:14px;
+    color:#1F5C40;text-align:center;margin-top:14px;display:flex;gap:9px;align-items:center;justify-content:center}
+
+  /* ============ 翻页卡片（正面处方 / 反面安心卡） ============ */
+  .flip-wrap{perspective:1600px;margin-bottom:18px}
+  .flip-inner{display:grid;transform-style:preserve-3d;touch-action:pan-y;
+    transition:transform 1s cubic-bezier(.34,1.45,.5,1)}
+  .flip-inner.dragging{transition:none;cursor:grabbing}
+  .flip-inner.dragging,.flip-inner.dragging *{user-select:none!important;-webkit-user-select:none!important}
+  .flip-inner.flipped{transform:rotateY(180deg)}
+  .flip-face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;margin-bottom:0}
+  .flip-back{transform:rotateY(180deg)}
+  .flip-front{position:relative}
+  .front-veil{position:absolute;inset:-1px;z-index:5;border-radius:26px;
+    background:rgba(255,253,248,.88);backdrop-filter:blur(7px);
+    display:flex;align-items:center;justify-content:center;padding:20px}
+  .flip-hint{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;
+    color:var(--muted);margin-top:13px;letter-spacing:1px}
+  .flip-hint .lucide{width:14px;height:14px}
+
+  /* ============ 可编辑文本（AI 草稿上直接二改） ============ */
+  .editable{border-radius:10px;transition:outline-color .25s,background .25s;
+    outline:1.5px dashed transparent;outline-offset:3px;position:relative}
+  .editable:hover{outline-color:var(--line-strong)}
+  .editable:focus{outline-color:var(--accent);background:rgba(255,255,255,.55)}
+  .editable.edited::after{content:"已修改";position:absolute;top:-9px;right:4px;font-size:10px;
+    background:var(--amber-soft);color:var(--amber);border-radius:6px;padding:1px 7px;letter-spacing:1px}
+  .edit-tip{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:2px 0 14px}
+  .edit-tip .lucide{width:13px;height:13px;flex:none}
+  .restore-btn{margin-left:auto;font-size:12px;color:var(--accent);display:inline-flex;
+    align-items:center;gap:4px;padding:2px 8px;border-radius:8px;flex:none}
+  .restore-btn:active{background:var(--accent-soft)}
+  .restore-btn .lucide{width:13px;height:13px}
+  .exporting .editable{outline-color:transparent!important}
+  .exporting .editable::after{display:none}
+  .exporting .edit-tip,.exporting .flip-hint{display:none}
+
+  /* ============ 结束卡片（选择自己处理后的终态） ============ */
+  .end-ico{width:64px;height:64px;border-radius:50%;background:var(--green-soft);color:var(--green);
+    display:grid;place-items:center;margin:16px auto 20px}
+  .end-ico .lucide{width:30px;height:30px}
+  .end-text{font-family:var(--serif);font-size:19px;font-weight:700;text-align:center;
+    line-height:1.9;color:var(--ink);margin:0 0 24px}
+
+  /* ============ 信源折叠（明确的展开入口） ============ */
+  .source-fold{width:100%;display:flex;align-items:center;gap:8px;margin:20px 0 10px;
+    font-family:var(--serif);font-size:16px;font-weight:700;color:var(--ink);text-align:left;
+    background:var(--cream);border:1.5px solid var(--line);border-radius:15px;padding:14px 15px;
+    transition:border-color .3s,background .3s}
+  .source-fold:active{border-color:var(--accent);background:var(--accent-soft)}
+  .source-fold .lucide{color:var(--accent)}
+  .sf-hint{margin-left:auto;font-size:12px;color:var(--accent);font-family:var(--sans);
+    font-weight:600;letter-spacing:1px}
+  .source-fold .sf-arrow{transition:transform .35s var(--ease);color:var(--muted)}
+  .source-fold.open .sf-arrow{transform:rotate(180deg)}
+
+  /* ============ 手势提示（flip 卡左右拖动翻页） ============ */
+  .gesture-tip{display:flex;align-items:center;justify-content:center;gap:6px;
+    font-size:11px;color:var(--faint);letter-spacing:1px;padding:2px 0 8px}
+  .gesture-tip .lucide{width:13px;height:13px}
+  .page{will-change:transform}
+
+  /* ============ 抽屉 / 弹层 / 提示 ============ */
+  .mask{position:fixed;inset:0;background:rgba(28,21,18,.5);z-index:80;opacity:0;
+    transition:opacity .4s;backdrop-filter:blur(3px)}
+  .mask.show{opacity:1}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(88vw,400px);z-index:90;
+    background:var(--paper);transform:translateX(105%);transition:transform .55s var(--ease);
+    display:flex;flex-direction:column;border-left:1px solid var(--line)}
+  .drawer.show{transform:none}
+  .drawer-head{display:flex;align-items:center;gap:10px;padding:20px;border-bottom:1px solid var(--line)}
+  .drawer-head h3{margin:0;font-family:var(--serif);font-size:19px;flex:1}
+  .drawer-body{flex:1;overflow-y:auto;padding:14px 16px}
+  .rec{background:var(--cream);border:1px solid var(--line);border-radius:16px;padding:15px 16px;
+    margin-bottom:12px;cursor:pointer;transition:.3s var(--ease)}
+  .rec:active{transform:scale(.97)}
+  .rec .r-claim{font-size:14.5px;font-weight:600;line-height:1.5;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .rec .r-meta{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:11.5px;color:var(--muted)}
+  .rec .r-del{margin-left:auto;color:var(--faint);padding:4px}
+  .rec .r-del:active{color:var(--red)}
+  .rec-empty{text-align:center;color:var(--faint);font-size:13px;padding:44px 0;
+    display:flex;flex-direction:column;align-items:center;gap:10px}
+  .modal{position:fixed;left:0;right:0;bottom:0;z-index:90;background:var(--paper);
+    border-radius:26px 26px 0 0;padding:26px 22px 38px;max-width:520px;margin:0 auto;
+    transform:translateY(105%);transition:transform .55s var(--ease);border-top:1px solid var(--line)}
+  .modal.show{transform:none}
+  .modal h3{margin:0 0 16px;font-family:var(--serif);font-size:19px}
+  .toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);background:var(--ink);
+    color:var(--cream);padding:12px 22px;border-radius:999px;font-size:14px;z-index:130;opacity:0;
+    transition:.4s var(--ease);pointer-events:none;max-width:86vw;text-align:center;
+    display:flex;gap:8px;align-items:center}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .err{background:var(--red-soft);color:var(--red);border-radius:14px;padding:13px 15px;
+    font-size:14px;margin-top:14px;word-break:break-all;display:flex;gap:9px;align-items:flex-start}
+  .err .lucide{flex:none;margin-top:2px}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo" aria-hidden="true"><svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="logo-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E8602F"/><stop offset=".55" stop-color="#D8491B"/><stop offset="1" stop-color="#BC3C11"/></linearGradient><linearGradient id="logo-sheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".22"/><stop offset=".45" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient><linearGradient id="logo-bubble" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFDF8"/><stop offset="1" stop-color="#F9EDDB"/></linearGradient></defs><rect width="512" height="512" rx="114" fill="url(#logo-bg)"/><rect width="512" height="512" rx="114" fill="url(#logo-sheen)"/><path d="M256 116c-88 0-150 53-150 120 0 37 20 69 53 91-4 20-13 38-28 52-4 4-3 10 2 12 33 9 67 1 92-17 10 2 20 3 31 3 88 0 150-53 150-120S344 116 256 116z" fill="url(#logo-bubble)"/><path d="M197 228l37 37 80-82" fill="none" stroke="#2F7D5A" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/><path d="M386 128c1.8 8 5.2 11.4 13 13-7.8 1.6-11.2 5-13 13-1.8-8-5.2-11.4-13-13 7.8-1.6 11.2-5 13-13z" fill="#FFF7EF" opacity=".9"/><path d="M412 176c1.2 5.4 3.6 7.8 9 9-5.4 1.2-7.8 3.6-9 9-1.2-5.4-3.6-7.8-9-9 5.4-1.2 7.8-3.6 9-9z" fill="#FFF7EF" opacity=".6"/></svg></div>
+  <div class="wordmark"><b>好好说</b><span>Myth Buster · 家族群谣言鉴定器</span></div>
+  <button class="icon-btn" id="btnHistory" aria-label="历史记录"><svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg></button>
+  <button class="icon-btn" id="btnSettings" aria-label="设置"><svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.4.2a2 2 0 0 1-2 0l-.1-.1a2 2 0 0 0-2.7.7l-.2.3a2 2 0 0 0 .7 2.7l.1.1a2 2 0 0 1 1 1.7v.5a2 2 0 0 1-1 1.7l-.1.1a2 2 0 0 0-.7 2.7l.2.3a2 2 0 0 0 2.7.7l.1-.1a2 2 0 0 1 2 0l.4.2a2 2 0 0 1 1 1.7v.2a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.4-.2a2 2 0 0 1 2 0l.1.1a2 2 0 0 0 2.7-.7l.2-.3a2 2 0 0 0-.7-2.7l-.1-.1a2 2 0 0 1-1-1.7v-.5a2 2 0 0 1 1-1.7l.1-.1a2 2 0 0 0 .7-2.7l-.2-.3a2 2 0 0 0-2.7-.7l-.1.1a2 2 0 0 1-2 0l-.4-.2a2 2 0 0 1-1-1.7V4a2 2 0 0 0-2-2Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+</header>
+
+<nav class="steps" id="stepBar">
+  <button class="step" data-s="1"><span class="num">01</span><span class="lbl">提交内容</span></button>
+  <button class="step" data-s="2"><span class="num">02</span><span class="lbl">核验信源</span></button>
+  <button class="step" data-s="3"><span class="num">03</span><span class="lbl">沟通方案</span></button>
+</nav>
+
+<!-- ============ 第1步 ============ -->
+<main class="page hidden" id="page1">
+  <div class="marquee"><span class="marquee-inner" id="marqueeText"></span></div>
+  <div class="card reveal">
+    <div class="eyebrow">Step 01 · 提交内容</div>
+    <h2 class="display">看到可疑的<br><em>健康消息</em>？</h2>
+    <p class="lead">粘贴链接、文字，或上传聊天与文章截图。我们帮你查清真相，再教你怎么跟长辈好好说。</p>
+    <div class="seg" id="segTabs">
+      <div class="seg-glider" id="segGlider"></div>
+      <button class="active" data-tab="link"><i data-lucide="link-2"></i>公众号链接</button>
+      <button data-tab="text"><i data-lucide="file-text"></i>粘贴文字</button>
+      <button data-tab="image"><i data-lucide="image"></i>上传截图</button>
+    </div>
+    <div id="pane-link">
+      <textarea id="inputLink" placeholder="粘贴公众号图文文章或内嵌视频文章链接，例如 https://mp.weixin.qq.com/s/..."></textarea>
+    </div>
+    <div id="pane-text" class="hidden">
+      <textarea id="inputText" placeholder="把长辈转发的文字内容粘贴到这里…"></textarea>
+    </div>
+    <div id="pane-image" class="hidden">
+      <div class="upload-box" id="uploadBox">
+        <i data-lucide="image-plus"></i>
+        <span>点击选择聊天截图 / 文章截图</span>
+        <input type="file" id="inputImage" accept="image/*" hidden>
+        <div id="imgPreview"></div>
+      </div>
+    </div>
+    <div style="height:18px"></div>
+    <button class="btn btn-primary" id="btnExtract">开始核验 <i data-lucide="arrow-right"></i></button>
+    <div id="err1"></div>
+  </div>
+  <div class="card hidden" id="extractLoading">
+    <div class="loading">
+      <div class="ring"></div>
+      <p id="extractLoadingText">正在读取公众号内容并分析…</p>
+      <div class="wait-ui">
+        <div class="wait-row"><span>解析进度</span><span class="wait-pct">0%</span></div>
+        <div class="wait-track"><div class="wait-fill"></div></div>
+        <div class="wait-tip"><i data-lucide="lightbulb"></i><span class="wait-tip-text"></span></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ============ 第2步 ============ -->
+<main class="page hidden" id="page2">
+  <div class="card reveal" id="claimCard">
+    <div class="eyebrow">解析 Agent · 选择核验主张</div>
+    <div id="claimSummary" style="font-size:14px;color:var(--muted)"></div>
+    <div class="claim-options" id="claimOptions"></div>
+    <div id="claimPatterns" style="margin-top:10px"></div>
+    <div style="height:16px"></div>
+    <button class="btn btn-accent" id="btnVerifyClaim">核验选中的主张 <i data-lucide="search-check"></i></button>
+  </div>
+  <div class="card hidden" id="verifyStatusCard">
+    <div class="eyebrow">Step 02 · 搜索核验 Agent</div>
+    <div class="loading" style="padding:22px 0">
+      <div class="status-seq">
+        <div class="status-item" id="st1"><span class="s-ico"><i data-lucide="shield-check"></i></span>正在核验来源（卫健委 / 疾控 / 权威媒体）</div>
+        <div class="status-item" id="st2"><span class="s-ico"><i data-lucide="git-compare"></i></span>正在交叉比对多个信源</div>
+        <div class="status-item" id="st3"><span class="s-ico"><i data-lucide="activity"></i></span>正在评估健康风险</div>
+      </div>
+      <div class="wait-ui" style="margin-top:10px">
+        <div class="wait-row"><span>核验进度</span><span class="wait-pct">0%</span></div>
+        <div class="wait-track"><div class="wait-fill"></div></div>
+        <div class="wait-tip"><i data-lucide="lightbulb"></i><span class="wait-tip-text"></span></div>
+      </div>
+    </div>
+  </div>
+  <div class="card hidden reveal" id="verifyResult">
+    <div class="eyebrow">核验结果</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px">
+      <span class="pill" id="verdictPill"></span>
+      <span class="pill" id="riskPill"></span>
+    </div>
+    <p id="verifySummary" style="font-size:15px;margin:6px 0"></p>
+    <button class="source-fold" id="btnToggleSources"><i data-lucide="book-open"></i>引用信源<span id="sourceFoldCount"></span><span class="sf-hint" id="sourceFoldHint">展开</span><i data-lucide="chevron-down sf-arrow"></i></button>
+    <div id="sourceList" class="hidden"></div>
+    <div class="notice"><i data-lucide="stethoscope"></i><span id="medicalNotice"></span></div>
+    <div style="height:20px"></div>
+    <button class="btn btn-primary" id="btnToStep3">下一步 · 生成沟通方案 <i data-lucide="arrow-right"></i></button>
+  </div>
+  <div id="err2"></div>
+</main>
+
+<!-- ============ 第3步 ============ -->
+<main class="page hidden" id="page3">
+  <div class="card reveal" id="relationForm">
+    <div class="eyebrow">Step 03 · 关系信息</div>
+    <h2 class="display" style="font-size:clamp(26px,7vw,34px)">这条消息<br>是<em>谁</em>发的？</h2>
+    <p class="lead">方案 Agent 会根据你们的关系，生成更有人情味的话术——先共情，再说事。</p>
+    <div class="field">
+      <label><i data-lucide="user"></i>沟通对象</label>
+      <div class="select-wrap"><select id="selTarget">
+        <option>妈妈</option><option>爸爸</option><option>爷爷</option><option>奶奶</option>
+        <option>外公</option><option>外婆</option><option>婆婆</option><option>公公</option>
+        <option>姑姑/阿姨</option><option>叔叔/舅舅</option><option>其他长辈</option>
+      </select></div>
+    </div>
+    <div class="field">
+      <label><i data-lucide="heart"></i>你们最近的关系状态</label>
+      <div class="select-wrap"><select id="selRelation">
+        <option value="亲密">很亲密，什么都能聊</option>
+        <option value="正常" selected>正常，偶尔联系</option>
+        <option value="有点紧张">有点紧张，说话要注意</option>
+        <option value="最近有过争执">最近有过争执</option>
+      </select></div>
+    </div>
+    <div class="field">
+      <label><i data-lucide="message-square-plus"></i>补充信息（可选）</label>
+      <textarea id="inputExtra" maxlength="1800" style="min-height:96px" placeholder="可以详细写：近期关系、既往争执、长辈的病史和用药情况、消息发在私聊还是家族群、你最担心的沟通后果等…"></textarea>
+      <div style="font-size:11.5px;color:var(--muted);text-align:right;margin-top:5px"><span id="extraCount">0</span> / 1800</div>
+    </div>
+    <button class="btn btn-accent" id="btnPlan">生成沟通方案 <i data-lucide="sparkles"></i></button>
+    <div id="err3"></div>
+  </div>
+  <div class="card hidden" id="planLoading">
+    <div class="loading">
+      <div class="ring"></div><p>方案 Agent 正在斟酌措辞…</p>
+      <div class="wait-ui">
+        <div class="wait-row"><span>生成进度</span><span class="wait-pct">0%</span></div>
+        <div class="wait-track"><div class="wait-fill"></div></div>
+        <div class="wait-tip"><i data-lucide="lightbulb"></i><span class="wait-tip-text"></span></div>
+      </div>
+    </div>
+  </div>
+  <div class="flip-wrap hidden reveal" id="planResult">
+    <div class="flip-inner" id="flipInner">
+      <!-- 正面：沟通处方 -->
+      <div class="card flip-face flip-front" id="planFront">
+        <div class="eyebrow">方案 Agent · 沟通处方</div>
+        <div class="channel-chip" id="channelChip"></div>
+        <div class="channel-reason" id="channelReason"></div>
+        <div class="plan-block plan-empathy">
+          <div class="h"><i data-lucide="heart-handshake"></i>先共情</div><div class="editable" id="planOpening" data-field="opening"></div>
+        </div>
+        <div class="plan-block plan-fact">
+          <div class="h"><i data-lucide="search-check"></i>再说事实</div><div class="editable" id="planFact" data-field="fact"></div>
+        </div>
+        <div class="plan-block plan-advice">
+          <div class="h"><i data-lucide="hand-helping"></i>最后给建议</div><div class="editable" id="planSuggestion" data-field="suggestion"></div>
+        </div>
+        <div class="edit-tip"><i data-lucide="pen-line"></i>点击文字可直接修改，换成你自己的口吻
+          <button class="restore-btn" id="btnRestorePlan"><i data-lucide="undo-2"></i>恢复 AI 原版</button></div>
+        <button class="btn btn-accent" id="btnGenCard" style="margin-bottom:12px"><i data-lucide="layers"></i>一键生成安心卡片</button>
+        <button class="btn btn-ghost" id="btnSelfHandle"><i data-lucide="pen-tool"></i>我选择自己处理</button>
+        <div class="front-veil hidden" id="cardLoading">
+          <div class="loading" style="padding:0">
+            <div class="ring"></div><p>方案 Agent 正在为你写安心卡片…</p>
+            <div class="wait-ui">
+              <div class="wait-row"><span>生成进度</span><span class="wait-pct">0%</span></div>
+              <div class="wait-track"><div class="wait-fill"></div></div>
+              <div class="wait-tip"><i data-lucide="lightbulb"></i><span class="wait-tip-text"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 反面：安心卡片 -->
+      <div class="card flip-face flip-back" id="planBack">
+        <div class="eyebrow">方案 Agent · 安心卡片</div>
+        <div class="elder-card" id="cardMain"></div>
+        <div class="edit-tip"><i data-lucide="pen-line"></i>点击卡片文字可直接修改
+          <button class="restore-btn" id="btnRestoreCard"><i data-lucide="undo-2"></i>恢复 AI 原版</button></div>
+        <button class="btn btn-primary" id="btnExport"><i data-lucide="download"></i>导出卡片为图片</button>
+        <div class="share-tip"><i data-lucide="badge-check"></i>经过有效测试，我们的方案可以大大提高与长辈沟通的成效</div>
+        <div style="height:14px"></div>
+        <button class="btn btn-soft" id="btnGoHome"><i data-lucide="home"></i>回到首页</button>
+        <div class="flip-hint" id="btnFlipFront" role="button"><i data-lucide="rotate-3d"></i>右滑或点这里，翻回沟通处方</div>
+      </div>
+    </div>
+    <div class="gesture-tip"><i data-lucide="move-horizontal"></i>左右拖动卡片可翻页</div>
+  </div>
+  <div class="card hidden reveal" id="endCard">
+    <div class="end-ico"><i data-lucide="heart-handshake"></i></div>
+    <p class="end-text">希望对你有帮助，<br>有需要可随时前往历史记录<br>查看我们的历史页面</p>
+    <button class="btn btn-soft" id="btnGoHome2"><i data-lucide="home"></i>回到首页</button>
+  </div>
+  <div id="err4"></div>
+</main>
+
+<!-- ============ 历史记录抽屉 ============ -->
+<div class="mask hidden" id="drawerMask"></div>
+<aside class="drawer" id="historyDrawer">
+  <div class="drawer-head">
+    <i data-lucide="history" style="color:var(--accent)"></i>
+    <h3>核验记录</h3>
+    <button class="icon-btn" id="btnCloseDrawer" aria-label="关闭"><i data-lucide="x"></i></button>
+  </div>
+  <div class="drawer-body" id="recordList"></div>
+</aside>
+
+<!-- ============ 设置弹层 ============ -->
+<div class="mask hidden" id="settingsMask"></div>
+<div class="modal" id="settingsModal">
+  <h3>后端接口设置</h3>
+  <div class="field">
+    <label><i data-lucide="server"></i>API 地址</label>
+    <input type="text" id="inputApi" placeholder="https://mb-b.chksz.top">
+  </div>
+  <button class="btn btn-primary" id="btnSaveSettings">保存 <i data-lucide="check"></i></button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==================== 工具 ==================== */
+const $ = (id) => document.getElementById(id);
+let iconRetryTimer = null;
+function icons(attempt = 0){
+  if (window.lucide){
+    clearTimeout(iconRetryTimer);
+    window.lucide.createIcons();
+    return true;
+  }
+  if (attempt < 20){
+    clearTimeout(iconRetryTimer);
+    iconRetryTimer = setTimeout(() => icons(attempt + 1), 150);
+  }
+  return false;
+}
+const lucideScript = document.querySelector('script[src*="lucide"]');
+lucideScript?.addEventListener("load", () => icons());
+window.addEventListener("load", () => icons());
+function toast(msg, icon){
+  $("toast").innerHTML = (icon?`<i data-lucide="${icon}"></i>`:"") + `<span>${msg}</span>`;
+  $("toast").classList.add("show"); icons();
+  clearTimeout(toast._t); toast._t = setTimeout(()=>$("toast").classList.remove("show"), 2600);
+}
+function showErr(boxId, msg){
+  $(boxId).innerHTML = msg ? `<div class="err"><i data-lucide="alert-triangle"></i><span>${escapeHtml(msg)}</span></div>` : "";
+  icons();
+}
+function escapeHtml(value){
+  return String(value??"").replace(/[&<>"']/g, ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+
+/* ==================== IndexedDB ==================== */
+const IDB = {
+  db: null,
+  open(){ return new Promise((res, rej)=>{
+    const rq = indexedDB.open("haohuoshuo-db", 1);
+    rq.onupgradeneeded = () => {
+      const db = rq.result;
+      if (!db.objectStoreNames.contains("records")){
+        const st = db.createObjectStore("records", {keyPath:"id", autoIncrement:true});
+        st.createIndex("ts", "ts");
+      }
+      if (!db.objectStoreNames.contains("kv")) db.createObjectStore("kv", {keyPath:"k"});
+    };
+    rq.onsuccess = () => { IDB.db = rq.result; res(); };
+    rq.onerror = () => rej(rq.error);
+  });},
+  tx(store, mode, fn){ return new Promise((res, rej)=>{
+    const t = IDB.db.transaction(store, mode), s = t.objectStore(store);
+    const out = fn(s);
+    t.oncomplete = () => res(out && out.result !== undefined ? out.result : out);
+    t.onerror = () => rej(t.error);
+  });},
+  put(store, val){ return IDB.tx(store, "readwrite", s => s.put(val)); },
+  get(store, key){ return new Promise((res, rej)=>{
+    const rq = IDB.db.transaction(store).objectStore(store).get(key);
+    rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error);
+  });},
+  del(store, key){ return IDB.tx(store, "readwrite", s => s.delete(key)); },
+  all(store){ return new Promise((res, rej)=>{
+    const rq = IDB.db.transaction(store).objectStore(store).getAll();
+    rq.onsuccess = () => res(rq.result || []); rq.onerror = () => rej(rq.error);
+  });},
+};
+
+/* ==================== 状态 ==================== */
+const state = {
+  api: localStorage.getItem("hhs_api") || "https://mb-b.chksz.top",
+  tab: "link",
+  maxStep: 1,        // 已解锁的最远步骤（决定可回退范围）
+  recordId: null,    // IndexedDB 记录 id
+  extract: null, selectedClaim: null, report: null, plan: null,
+  card: null, selfHandled: false, imageData: null,
+};
+/* AI 原文快照：用于「已修改」角标与恢复原版（不随用户二改而变） */
+const originals = { plan: null, card: null };
+const workflow = {
+  generation: 0,
+  controllers: new Set(),
+  timers: new Set(),
+  busy: new Set(),
+};
+const REQUEST_TIMEOUT_MS = 90000;
+
+function isCurrentWorkflow(generation){
+  return generation === workflow.generation;
+}
+function clearWorkflowTimers(){
+  workflow.timers.forEach(clearTimeout);
+  workflow.timers.clear();
+}
+function cancelWorkflowAsync(){
+  workflow.controllers.forEach(controller => controller.abort());
+  workflow.controllers.clear();
+  clearWorkflowTimers();
+  workflow.busy.clear();
+  ["btnExtract", "btnVerifyClaim", "btnPlan", "btnGenCard"].forEach(id => {
+    if ($(id)) $(id).disabled = false;
+  });
+}
+function advanceWorkflow(){
+  cancelWorkflowAsync();
+  workflow.generation += 1;
+  return workflow.generation;
+}
+function workflowTimeout(fn, delay, generation = workflow.generation){
+  const timer = setTimeout(() => {
+    workflow.timers.delete(timer);
+    if (isCurrentWorkflow(generation)) fn();
+  }, delay);
+  workflow.timers.add(timer);
+  return timer;
+}
+function clearWorkflowTimeout(timer){
+  clearTimeout(timer);
+  workflow.timers.delete(timer);
+}
+function setBusy(name, buttonId, busy){
+  if (busy) workflow.busy.add(name);
+  else workflow.busy.delete(name);
+  if (buttonId && $(buttonId)) $(buttonId).disabled = busy;
+}
+function isCanceledError(error){
+  return error && (error.kind === "canceled" || error.name === "AbortError");
+}
+function clearErrors(){
+  ["err1", "err2", "err3", "err4"].forEach(id => showErr(id));
+}
+function resetTransientUi(){
+  stopAllWaiters();
+  clearErrors();
+  $("extractLoading").classList.add("hidden");
+  $("verifyStatusCard").classList.add("hidden");
+  [["st1", "shield-check"], ["st2", "git-compare"], ["st3", "activity"]].forEach(([id, icon]) => {
+    const item = $(id);
+    item.classList.remove("on", "ok");
+    item.querySelector(".s-ico").innerHTML = `<i data-lucide="${icon}"></i>`;
+  });
+  $("verifyResult").classList.add("hidden");
+  $("claimCard").classList.remove("hidden");
+  $("planLoading").classList.add("hidden");
+  $("relationForm").classList.remove("hidden");
+  $("planResult").classList.add("hidden");
+  $("flipInner").classList.remove("flipped");
+  $("cardLoading").classList.add("hidden");
+  $("endCard").classList.add("hidden");
+  originals.plan = null; originals.card = null;
+  ["claimSummary", "claimOptions", "claimPatterns", "verifySummary", "sourceList", "medicalNotice",
+    "channelChip", "channelReason", "planOpening", "planFact", "planSuggestion",
+    "cardMain"].forEach(id => {
+    if ($(id)) $(id).textContent = "";
+  });
+  setPlanEditable(false);
+  refreshGenCardBtn();
+}
+function clearDerivedState(){
+  state.extract = null;
+  state.selectedClaim = null;
+  state.report = null;
+  state.plan = null;
+  state.card = null;
+  state.selfHandled = false;
+  state.recordId = null;
+  state.maxStep = 1;
+  resetTransientUi();
+}
+function formatRequestError(action, error){
+  if (error && error.userMessage){
+    return `${action}失败：${error.userMessage}${error.requestId ? `（反馈编号：${error.requestId}）` : ""}`;
+  }
+  if (error && error.kind === "timeout") return `${action}超时，请检查网络后重试。`;
+  if (error instanceof TypeError) return `${action}失败：暂时无法连接服务，请检查网络或接口地址后重试。`;
+  return `${action}失败：服务暂时出现问题，请稍后重试。`;
+}
+
+function snapshot(){
+  return {
+    recordId: state.recordId, maxStep: state.maxStep,
+    extract: state.extract, selectedClaim: state.selectedClaim, report: state.report, plan: state.plan,
+    card: state.card, selfHandled: state.selfHandled,
+    planOrig: originals.plan, cardOrig: originals.card,
+    target: $("selTarget") ? $("selTarget").value : "妈妈",
+    relation: $("selRelation") ? $("selRelation").value : "正常",
+    extra: $("inputExtra") ? $("inputExtra").value : "",
+    ts: Date.now(),
+  };
+}
+let saveTimer = null;
+function saveDraft(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{ IDB.put("kv", {k:"draft", v:snapshot()}).catch(()=>{}); }, 300);
+}
+async function upsertRecord(){
+  const snap = snapshot();
+  try{
+    if (state.recordId){
+      await IDB.put("records", {...snap, id: state.recordId});
+    }else{
+      const key = await new Promise((res, rej)=>{
+        const rq = IDB.db.transaction("records","readwrite").objectStore("records").add(snap);
+        rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error);
+      });
+      state.recordId = key;
+    }
+  }catch(e){}
+}
+
+/* ==================== 步骤导航（可回退） ==================== */
+function renderStepBar(){
+  document.querySelectorAll(".step").forEach(d=>{
+    const s = +d.dataset.s;
+    d.classList.toggle("done", s < currentStep);
+    d.classList.toggle("active", s === currentStep);
+    const ok = s <= state.maxStep;
+    d.classList.toggle("clickable", ok);
+    d.classList.toggle("locked", !ok);
+  });
+}
+let currentStep = 1;
+function goStep(n){
+  currentStep = n;
+  state.maxStep = Math.max(state.maxStep, n);
+  [1,2,3].forEach(i => $("page"+i).classList.toggle("hidden", i !== n));
+  renderStepBar();
+  requestAnimationFrame(()=> revealIn("page"+n));
+  window.scrollTo({top:0, behavior:"smooth"});
+  saveDraft();
+}
+document.querySelectorAll(".step").forEach(d=>{
+  d.onclick = () => {
+    const s = +d.dataset.s;
+    if (s > state.maxStep){ toast("请先完成前面的步骤", "lock"); return; }
+    if (s === currentStep) return;
+    restoreStep(s);   // 回退时把已暂存的内容渲染回来
+    goStep(s);
+  };
+});
+function restoreStep(n){
+  if (n >= 2 && state.extract){
+    renderClaim();
+    $("claimCard").classList.toggle("hidden", !!state.report);
+  }
+  if (n >= 2 && state.report){ $("verifyStatusCard").classList.add("hidden");
+    $("verifyResult").classList.remove("hidden"); renderReport(state.report); }
+  if (n >= 3 && state.plan){
+    if (state.selfHandled && !state.card){
+      // 结束态：只留结束卡，清掉上方表单与处方，避免信息残留
+      $("relationForm").classList.add("hidden");
+      $("planResult").classList.add("hidden");
+      $("endCard").classList.remove("hidden");
+      return;
+    }
+    $("relationForm").classList.remove("hidden");
+    $("planResult").classList.remove("hidden");
+    $("endCard").classList.add("hidden");
+    renderPlan(state.plan, true);
+    // 终态互斥：有卡片走翻面，无卡片且选了自己处理才显示结束卡，绝不同时出现
+    if (state.card){
+      state.selfHandled = false;
+      renderMainCard(); setCardEditable(true); $("flipInner").classList.add("flipped");
+    }
+    refreshGenCardBtn();
+  }
+}
+
+/* ==================== flip 卡拖拽翻面（仅此卡可拖：右→左拖去安心卡，左→右拖回处方） ==================== */
+(function bindFlipDrag(){
+  const wrap = $("planResult"), inner = $("flipInner");
+  let tracking = false, dragging = false, sx = 0, sy = 0, pid = null;
+  const baseAngle = () => inner.classList.contains("flipped") ? 180 : 0;
+
+  wrap.addEventListener("pointerdown", e => {
+    if (e.button !== undefined && e.button > 0) return;
+    // 按钮/链接/表单控件上不接管；可编辑文字允许拖（点按无位移仍可正常聚焦编辑）
+    if (e.target.closest("button, a, textarea, input, select")) return;
+    if (!$("cardLoading").classList.contains("hidden")) return;   // 生成中不翻面
+    tracking = true; dragging = false;
+    pid = e.pointerId; sx = e.clientX; sy = e.clientY;
+  });
+  wrap.addEventListener("pointermove", e => {
+    if (!tracking || e.pointerId !== pid) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (!dragging){
+      if (Math.abs(dx) < 12 && Math.abs(dy) < 12) return;
+      if (Math.abs(dx) <= Math.abs(dy) * 1.2){ tracking = false; return; }  // 纵向滚动让位
+      dragging = true;
+      inner.classList.add("dragging");
+      try{ wrap.setPointerCapture(pid); }catch(_){}
+    }
+    e.preventDefault();
+    const w = wrap.clientWidth || 320;
+    const flipped = inner.classList.contains("flipped");
+    const canAdvance = flipped || !!state.card;   // 正面无卡时不允许翻过去
+    // 跟手角度：右→左拖 angle 增大（去反面），左→右拖 angle 减小（回正面）
+    let angle = baseAngle() - (dx / w) * 180;
+    angle = canAdvance ? Math.max(-18, Math.min(198, angle))      // 允许轻微过冲，松手弹回
+                       : Math.max(-18, Math.min(18, angle));      // 无卡：拖不动的阻尼感
+    inner.style.transform = `rotateY(${angle}deg)`;
+  });
+  function finish(e){
+    if (!tracking || e.pointerId !== pid) return;
+    tracking = false;
+    if (!dragging) return;
+    dragging = false;
+    inner.classList.remove("dragging");
+    const dx = e.clientX - sx;
+    const w = wrap.clientWidth || 320;
+    const need = Math.max(60, w * 0.22);          // 触发翻面的最小位移
+    inner.style.transform = "";                   // 交还 class + transition（spring 弹回/翻面）
+    const flipped = inner.classList.contains("flipped");
+    if (!flipped && dx < -need && state.card) flipTo(true);       // 右→左：去安心卡
+    else if (flipped && dx > need) flipTo(false);                 // 左→右：回处方
+  }
+  wrap.addEventListener("pointerup", finish);
+  wrap.addEventListener("pointercancel", finish);
+})();
+
+/* ==================== 进场动效 ==================== */
+function revealIn(pageId){
+  const generation = workflow.generation;
+  const els = document.querySelectorAll("#"+pageId+" .reveal");
+  els.forEach(el => el.classList.remove("in"));
+  requestAnimationFrame(()=> workflowTimeout(()=>{
+    els.forEach(el => el.classList.add("in"));
+  }, 30, generation));
+}
+
+/* ==================== API ==================== */
+async function api(path, body, generation = workflow.generation){
+  const controller = new AbortController();
+  workflow.controllers.add(controller);
+  let timedOut = false;
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, REQUEST_TIMEOUT_MS);
+  try{
+    const res = await fetch(state.api + path, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(body),
+      signal:controller.signal,
+    });
+    if (!isCurrentWorkflow(generation)) {
+      const error = new Error("请求所属流程已结束");
+      error.kind = "canceled";
+      throw error;
+    }
+    if(!res.ok){
+      const requestId = res.headers.get("X-Request-ID") || "";
+      const raw = await res.text();
+      let message = "";
+      let code = "";
+      try{
+        const data = raw ? JSON.parse(raw) : null;
+        message = typeof data?.message === "string" ? data.message : "";
+        code = typeof data?.code === "string" ? data.code : "";
+        const detail = data?.detail;
+        if (!message && typeof detail === "string") message = detail;
+        if (!message && Array.isArray(detail)) {
+          message = detail.map(item => {
+            const field = item.loc?.slice(1).join(".") || "输入内容";
+            return `${field}：${item.msg || "格式不正确"}`;
+          }).join("；");
+        }
+      }catch(e){
+        message = raw.trim();
+      }
+      const error = new Error(message || `请求失败（HTTP ${res.status}）`);
+      error.userMessage = error.message;
+      error.status = res.status;
+      error.code = code;
+      error.requestId = requestId;
+      throw error;
+    }
+    return await res.json();
+  }catch(error){
+    if (error.name === "AbortError") {
+      error.kind = timedOut ? "timeout" : "canceled";
+    }
+    throw error;
+  }finally{
+    clearTimeout(timeout);
+    workflow.controllers.delete(controller);
+  }
+}
+
+/* ==================== 第1步 ==================== */
+const TABS = ["link","text","image"];
+function setTab(tab){
+  const i = TABS.indexOf(tab);
+  if (i < 0) return false;
+  state.tab = tab;
+  $("segGlider").style.transform = `translateX(${i*100}%)`;
+  document.querySelectorAll("#segTabs button").forEach(x=>x.classList.toggle("active", x.dataset.tab === tab));
+  TABS.forEach(k => $("pane-"+k).classList.toggle("hidden", k !== tab));
+  return true;
+}
+document.querySelectorAll("#segTabs button").forEach(t=>{
+  t.onclick = () => setTab(t.dataset.tab);
+});
+
+const QUERY_MODE_TO_TAB = {wechat_url:"link", link:"link", text:"text", image:"image"};
+function readQueryPrefill(){
+  const params = new URLSearchParams(location.search);
+  if (!params.has("mode")) return null;
+  const mode = (params.get("mode") || "").trim().toLowerCase();
+  const tab = QUERY_MODE_TO_TAB[mode];
+  if (!tab) return null;
+  return {
+    tab,
+    hasContent: params.has("content"),
+    content: params.get("content") || "",
+  };
+}
+function applyQueryPrefill(prefill){
+  advanceWorkflow();
+  clearDerivedState();
+  state.imageData = null;
+  $("inputLink").value = "";
+  $("inputText").value = "";
+  $("inputImage").value = "";
+  $("imgPreview").innerHTML = "";
+  setTab(prefill.tab);
+  if (prefill.hasContent && prefill.tab === "link") $("inputLink").value = prefill.content;
+  if (prefill.hasContent && prefill.tab === "text") $("inputText").value = prefill.content;
+}
+$("uploadBox").onclick = () => $("inputImage").click();
+$("inputImage").onchange = (e) => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => { $("imgPreview").innerHTML = `<img src="${r.result}" alt="截图预览">`; state.imageData = r.result; };
+  r.readAsDataURL(f);
+};
+$("btnExtract").onclick = async () => {
+  if (workflow.busy.has("extract")) return;
+  showErr("err1");
+  let payload;
+  if (state.tab === "link"){
+    const v = $("inputLink").value.trim();
+    if(!v) return showErr("err1","请先粘贴链接");
+    const url = (v.match(/https?:\/\/\S+/)||[null])[0];
+    payload = url ? {type:"wechat_url", content:url} : {type:"text", content:v};
+  }else if (state.tab === "text"){
+    const v = $("inputText").value.trim();
+    if(!v) return showErr("err1","请先粘贴文字内容");
+    payload = {type:"text", content:v};
+  }else{
+    if(!state.imageData) return showErr("err1","请先上传截图");
+    payload = {type:"image", content:state.imageData};
+  }
+  const generation = advanceWorkflow();
+  clearDerivedState();
+  setBusy("extract", "btnExtract", true);
+  $("extractLoadingText").textContent = payload.type === "wechat_url"
+    ? "正在识别公众号图文或视频内容并分析…"
+    : payload.type === "image" ? "正在读取截图文字并分析…" : "正在分析文本内容…";
+  $("extractLoading").classList.remove("hidden");
+  waitStart("extractLoading", "extract");
+  try{
+    const extracted = await api("/api/extract", payload, generation);
+    if (!isCurrentWorkflow(generation)) return;
+    await waitSettle("extractLoading");
+    if (!isCurrentWorkflow(generation)) return;
+    state.extract = extracted;
+    state.selectedClaim = extracted.claim;
+    state.maxStep = 1;
+    renderClaim();
+    goStep(2);
+  }catch(e){
+    if (isCurrentWorkflow(generation) && !isCanceledError(e)) showErr("err1", formatRequestError("解析", e));
+  }finally{
+    waitStop("extractLoading");
+    if (isCurrentWorkflow(generation)) {
+      $("extractLoading").classList.add("hidden");
+      setBusy("extract", "btnExtract", false);
+    }
+  }
+};
+
+/* ==================== 等待进度条 + 轮播贴士 ==================== */
+/* 用户反馈：等待时太枯燥。进度条为"假进度"（起步快、越往后越慢、最多停在 94%，
+   真实结果返回后补满 100%），同时每 3.4s 淡入淡出轮换一条温馨提示。 */
+const WAIT_TIPS = {
+  extract: [
+    "小贴士：标题里全是感叹号和「震惊体」，多半要先打个问号。",
+    "小贴士：真正靠谱的健康信息，通常会写明来源、作者和时间。",
+    "小贴士：文字、链接、聊天截图都可以直接交给我们核验。",
+    "温馨提示：等待时不妨先想想——这条消息最让您担心的是什么？",
+  ],
+  verify: [
+    "我们正在比对卫健委、疾控中心、权威媒体等多个信源。",
+    "小贴士：同一个说法在多个权威渠道相互印证，可信度才高。",
+    "温馨提示：谣言常常利用「为家人好」的心理传播，先别急着转发。",
+    "小贴士：涉及用药、治疗的决定，请以医生的意见为准。",
+  ],
+  plan: [
+    "沟通小贴士：先认可长辈的关心，再摆事实，效果会好很多。",
+    "沟通小贴士：把「您被骗了」换成「我们一起看看」，更不容易吵起来。",
+    "温馨提示：对长辈来说，被理解比被说服更重要。",
+    "沟通小贴士：私下单独聊，通常比在家族群里当众纠正更体面。",
+  ],
+  card: [
+    "小贴士：卡片上的每句话都可以点开修改，换成你的口吻更贴心。",
+    "温馨提示：卡片是大字排版，长辈不戴眼镜也能看清。",
+    "小贴士：导出图片后配上你的一句关心，比单发一张图更暖心。",
+    "温馨提示：发之前再读一遍，确认语气像平时你跟长辈说话的样子。",
+  ],
+};
+const activeWaiters = new Map();
+function waitStart(id, kind){
+  waitStop(id);
+  const card = $(id); if (!card) return;
+  const fill = card.querySelector(".wait-fill");
+  const pct = card.querySelector(".wait-pct");
+  const tipEl = card.querySelector(".wait-tip-text");
+  if (!fill || !pct) return;
+  const tips = WAIT_TIPS[kind] || [];
+  const w = {p:0, ti:0, fill, pct, tipEl, tips, timers:[]};
+  const render = () => {
+    w.fill.style.width = w.p.toFixed(1) + "%";
+    w.pct.textContent = Math.round(w.p) + "%";
+  };
+  render();
+  if (tipEl && tips.length) tipEl.textContent = tips[0];
+  w.timers.push(setInterval(() => {
+    w.p = Math.min(94, w.p + (94 - w.p) * 0.03 * (0.5 + Math.random()));
+    render();
+  }, 160));
+  if (tipEl && tips.length > 1) w.timers.push(setInterval(() => {
+    w.ti = (w.ti + 1) % tips.length;
+    tipEl.classList.add("fade");
+    w.timers.push(setTimeout(() => {
+      tipEl.textContent = tips[w.ti];
+      tipEl.classList.remove("fade");
+    }, 300));
+  }, 3400));
+  activeWaiters.set(id, w);
+}
+function waitSettle(id){
+  /* 真实结果已返回：补满 100% 并稍作停留，让用户看到"完成"的瞬间 */
+  const w = activeWaiters.get(id);
+  if (!w) return Promise.resolve();
+  w.timers.forEach(t => { clearInterval(t); clearTimeout(t); });
+  w.timers = [];
+  w.fill.style.width = "100%";
+  w.pct.textContent = "100%";
+  return new Promise(res => setTimeout(res, 380));
+}
+function waitStop(id){
+  const w = activeWaiters.get(id);
+  if (!w) return;
+  w.timers.forEach(t => { clearInterval(t); clearTimeout(t); });
+  activeWaiters.delete(id);
+}
+function stopAllWaiters(){ [...activeWaiters.keys()].forEach(waitStop); }
+
+/* ==================== 第2步 ==================== */
+function renderClaim(){
+  const sourceLabel = state.extract.source_kind === "wechat_article"
+    ? `已读取公众号图文${state.extract.article_author ? " · "+state.extract.article_author : ""}`
+    : state.extract.source_kind === "wechat_video" ? "已解析公众号内嵌视频" : "";
+  const summary = state.extract.topic_summary || "";
+  $("claimSummary").textContent = [sourceLabel, summary, "请选择最想核验的一条"].filter(Boolean).join(" · ");
+  const candidates = (state.extract.claims && state.extract.claims.length)
+    ? state.extract.claims : [{claim:state.extract.claim, evidence:(state.extract.original_evidence||[])[0]||"", risk_hint:"medium"}];
+  if (!state.selectedClaim) state.selectedClaim = candidates[0].claim;
+  const riskLabel = {high:"潜在高风险",medium:"潜在中风险",low:"潜在低风险"};
+  $("claimOptions").innerHTML = candidates.map((c,i)=>`
+    <button class="claim-option ${c.claim===state.selectedClaim?"selected":""}" data-claim-index="${i}">
+      <span class="claim-radio">${c.claim===state.selectedClaim?'<i data-lucide="check"></i>':''}</span>
+      <span><span class="co-text">${escapeHtml(c.claim)}</span>
+      ${c.evidence?`<span class="co-evidence">原文：${escapeHtml(c.evidence)}</span>`:""}
+      <span class="risk-dot"><i data-lucide="activity"></i>${riskLabel[c.risk_hint]||"待评估"}</span></span>
+    </button>`).join("");
+  $("claimPatterns").innerHTML = (state.extract.patterns||[])
+    .map(p=>`<span class="tag"><i data-lucide="flag"></i>${escapeHtml(p)}</span>`).join("");
+  document.querySelectorAll(".claim-option").forEach(el=>{
+    el.onclick=()=>{
+      const nextClaim = candidates[+el.dataset.claimIndex].claim;
+      if (nextClaim === state.selectedClaim) return;
+      advanceWorkflow();
+      state.selectedClaim = nextClaim;
+      state.report = null;
+      state.plan = null;
+      state.card = null;
+      state.selfHandled = false;
+      state.recordId = null;
+      state.maxStep = 2;
+      resetTransientUi();
+      renderClaim();
+      renderStepBar();
+      saveDraft();
+    };
+  });
+  icons();
+}
+function setStatus(idx, mode){
+  const el = $("st"+idx); if(!el) return;
+  el.classList.remove("on","ok"); el.classList.add(mode);
+  const ico = el.querySelector(".s-ico");
+  ico.innerHTML = mode==="ok" ? '<i data-lucide="check"></i>'
+    : mode==="on" ? '<i data-lucide="loader-2"></i>' : ico.innerHTML;
+  if (mode==="on") ico.querySelector(".lucide")?.classList.add("spin-i");
+  icons();
+  if (mode==="on"){ const s = ico.querySelector("svg"); if(s) s.style.animation="spin 1s linear infinite"; }
+}
+$("btnVerifyClaim").onclick = () => {
+  if (!state.selectedClaim) return toast("请先选择一条主张", "circle-alert");
+  runVerify();
+};
+async function runVerify(){
+  if (workflow.busy.has("verify")) return;
+  showErr("err2");
+  const generation = workflow.generation;
+  setBusy("verify", "btnVerifyClaim", true);
+  $("claimCard").classList.add("hidden");
+  $("verifyResult").classList.add("hidden");
+  $("verifyStatusCard").classList.remove("hidden");
+  waitStart("verifyStatusCard", "verify");
+  setStatus(1,"on");
+  const t2 = workflowTimeout(()=>{ setStatus(1,"ok"); setStatus(2,"on"); }, 1800, generation);
+  const t3 = workflowTimeout(()=>{ setStatus(2,"ok"); setStatus(3,"on"); }, 3800, generation);
+  try{
+    const report = await api("/api/verify", {claim: state.selectedClaim || state.extract.claim}, generation);
+    if (!isCurrentWorkflow(generation)) return;
+    clearWorkflowTimeout(t2); clearWorkflowTimeout(t3);
+    await waitSettle("verifyStatusCard");
+    if (!isCurrentWorkflow(generation)) return;
+    setStatus(1,"ok"); setStatus(2,"ok"); setStatus(3,"ok");
+    state.report = report;
+    state.plan = null;
+    state.card = null;
+    state.selfHandled = false;
+    saveDraft();
+    renderReport(report);
+    workflowTimeout(()=>{
+      $("verifyStatusCard").classList.add("hidden");
+      $("verifyResult").classList.remove("hidden");
+      revealIn("page2");
+    }, 500, generation);
+  }catch(e){
+    clearWorkflowTimeout(t2); clearWorkflowTimeout(t3);
+    if (isCurrentWorkflow(generation)) {
+      $("verifyStatusCard").classList.add("hidden");
+      $("claimCard").classList.remove("hidden");
+      if (!isCanceledError(e)) showErr("err2", formatRequestError("核验", e));
+    }
+  }finally{
+    waitStop("verifyStatusCard");
+    if (isCurrentWorkflow(generation)) setBusy("verify", "btnVerifyClaim", false);
+  }
+}
+const VERDICT = {credible:["基本可信","pill-green","check-circle-2"],misleading:["存在误导","pill-red","alert-octagon"],uncertain:["暂时无法判断","pill-amber","help-circle"]};
+const RISK = {low:["低风险","pill-green"],medium:["中风险","pill-amber"],high:["高风险","pill-red"]};
+function renderReport(r){
+  const v = VERDICT[r.verdict] || VERDICT.uncertain;
+  const k = RISK[r.risk_level] || RISK.low;
+  $("verdictPill").innerHTML = `<i data-lucide="${v[2]}"></i>${v[0]}`; $("verdictPill").className = "pill "+v[1];
+  $("riskPill").textContent = "风险：" + k[0]; $("riskPill").className = "pill "+k[1];
+  $("verifySummary").textContent = r.summary || "";
+  // 信源默认折叠，点击展开
+  const srcCount = (r.sources||[]).length;
+  $("sourceFoldCount").textContent = srcCount ? `（${srcCount} 条）` : "";
+  $("sourceList").classList.add("hidden");
+  $("btnToggleSources").classList.remove("open");
+  $("sourceFoldHint").textContent = "展开";
+  $("sourceList").innerHTML = (r.sources||[]).map((s,i) =>
+    `<article class="source-item">
+      <div class="source-head"><b>${escapeHtml(s.title||"未命名来源")}</b><span class="authority">${escapeHtml(s.authority_label||"来源等级未标注")}</span></div>
+      <div class="pub"><span>${escapeHtml(s.publisher||"")}</span>${s.published_at?`<span><i data-lucide="calendar"></i>${escapeHtml(s.published_at)}</span>`:""}</div>
+      ${s.evidence?`<button class="source-toggle" data-source-toggle="${i}"><i data-lucide="quote"></i>查看证据摘录 <i data-lucide="chevron-down"></i></button>
+      <div class="evidence-quote hidden" id="evidence-${i}">${escapeHtml(s.evidence)}</div>`:""}
+      <a href="${escapeHtml(s.url)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>打开原始信源</a>
+    </article>`).join("") || '<div class="source-item">未找到足够权威的信源，当前结论应视为暂时无法判断。</div>';
+  document.querySelectorAll("[data-source-toggle]").forEach(btn=>{
+    btn.onclick=()=>{
+      const box=$("evidence-"+btn.dataset.sourceToggle); box.classList.toggle("hidden");
+      btn.innerHTML=box.classList.contains("hidden")?'<i data-lucide="quote"></i>查看证据摘录 <i data-lucide="chevron-down"></i>':'<i data-lucide="quote"></i>收起证据摘录 <i data-lucide="chevron-up"></i>';
+      icons();
+    };
+  });
+  $("medicalNotice").textContent = (r.medical_notice || "内容仅供健康信息核验，不能替代医生诊断。")
+    + (r.verdict==="uncertain" ? " 涉及医疗、用药决策时，请咨询专业人士。" : "");
+  icons();
+}
+$("btnToStep3").onclick = () => goStep(3);
+$("btnToggleSources").onclick = () => {
+  const list = $("sourceList");
+  list.classList.toggle("hidden");
+  const open = !list.classList.contains("hidden");
+  $("btnToggleSources").classList.toggle("open", open);
+  $("sourceFoldHint").textContent = open ? "收起" : "展开";
+  icons();
+};
+
+/* ==================== 第3步 ==================== */
+$("inputExtra").addEventListener("input", () => {
+  $("extraCount").textContent = $("inputExtra").value.length;
+  saveDraft();
+});
+$("btnPlan").onclick = async () => {
+  if (workflow.busy.has("plan")) return;
+  showErr("err3");
+  const generation = workflow.generation;
+  const target = $("selTarget").value;
+  let rel = $("selRelation").value;
+  const extra = $("inputExtra").value.trim();
+  if (extra) rel += `；补充：${extra}`;
+  setBusy("plan", "btnPlan", true);
+  $("relationForm").classList.add("hidden");
+  $("planLoading").classList.remove("hidden");
+  waitStart("planLoading", "plan");
+  try{
+    const plan = await api("/api/verify", {claim: state.selectedClaim || state.extract.claim, target, relationship_state: rel}, generation);
+    if (!isCurrentWorkflow(generation)) return;
+    await waitSettle("planLoading");
+    if (!isCurrentWorkflow(generation)) return;
+    state.plan = plan;
+    state.card = null;
+    state.selfHandled = false;
+    upsertRecord(); saveDraft();
+    $("endCard").classList.add("hidden");
+    $("planResult").classList.remove("hidden");
+    renderPlan(plan, false);
+    revealIn("page3");
+  }catch(e){
+    if (isCurrentWorkflow(generation)) {
+      $("relationForm").classList.remove("hidden");
+      if (!isCanceledError(e)) showErr("err3", formatRequestError("生成方案", e));
+    }
+  }finally{
+    waitStop("planLoading");
+    if (isCurrentWorkflow(generation)) {
+      $("planLoading").classList.add("hidden");
+      setBusy("plan", "btnPlan", false);
+    }
+  }
+};
+const CH = {private_chat:["message-circle","建议私下单独沟通"],family_group:["users","建议在家族群公开回应"],
+  via_relative:["waypoints","建议请其他亲属转达"],no_reply:["moon","建议暂不回应"]};
+function renderPlan(plan, instant){
+  const c = plan.communication || {};
+  // 新生成时快照 AI 原文；草稿/历史恢复时沿用已存快照（保留「已修改」标记）
+  if (!instant || !originals.plan){
+    originals.plan = { opening:c.opening||"", fact:c.fact||"", suggestion:c.suggestion||"" };
+  }
+  const ch = CH[c.channel] || ["message-circle","沟通建议"];
+  $("channelChip").innerHTML = `<i data-lucide="${ch[0]}"></i>${ch[1]}`;
+  $("channelReason").textContent = c.reason || "";
+  if (instant){
+    $("planOpening").textContent = c.opening || "";
+    $("planFact").textContent = c.fact || "";
+    $("planSuggestion").textContent = c.suggestion || "";
+    setPlanEditable(true); syncEditedMarks();
+  }else{
+    setPlanEditable(false);
+    const generation = workflow.generation;
+    typewriter("planOpening", c.opening||"", () =>
+      typewriter("planFact", c.fact||"", () =>
+        typewriter("planSuggestion", c.suggestion||"", () => {
+          if (isCurrentWorkflow(generation)) setPlanEditable(true);
+        })));
+  }
+  refreshGenCardBtn();
+  icons();
+}
+function typewriter(id, text, done){
+  const generation = workflow.generation;
+  const el = $(id); el.innerHTML = '<span class="cursor"></span>'; let i = 0;
+  const tick = () => {
+    if (!isCurrentWorkflow(generation)) return;
+    if (i < text.length){
+      el.innerHTML = escapeHtml(text.slice(0, ++i)) + '<span class="cursor"></span>';
+      workflowTimeout(tick, 22, generation);
+    } else {
+      el.textContent = text;
+      done && done();
+    }
+  };
+  tick();
+}
+/* ==================== 第3步 · 交付（原地翻页，无独立第4步） ==================== */
+$("btnSelfHandle").onclick = () => {
+  state.selfHandled = true;
+  // 清场：隐藏上方的关系表单与处方卡，只留结束卡，避免信息残留
+  $("relationForm").classList.add("hidden");
+  $("planResult").classList.add("hidden");
+  $("endCard").classList.remove("hidden");
+  upsertRecord(); saveDraft();
+  window.scrollTo({top:0, behavior:"smooth"});
+};
+
+/* 已有卡片时按钮变为「再看一眼」，直接翻面不重复请求 */
+function refreshGenCardBtn(){
+  $("btnGenCard").innerHTML = state.card
+    ? '<i data-lucide="rotate-3d"></i>再看一眼安心卡片'
+    : '<i data-lucide="layers"></i>一键生成安心卡片';
+  icons();
+}
+function flipTo(back){
+  $("flipInner").classList.toggle("flipped", back);
+}
+$("btnFlipFront").onclick = () => flipTo(false);
+
+$("btnGenCard").onclick = async () => {
+  if (state.card){ flipTo(true); return; }
+  if (workflow.busy.has("cards")) return;
+  if (!state.report){ showErr("err4", "请先完成第 2 步核验，再生成安心卡片。"); return; }
+  showErr("err4");
+  const generation = workflow.generation;
+  setBusy("cards", "btnGenCard", true);
+  $("cardLoading").classList.remove("hidden");
+  waitStart("cardLoading", "card");
+  const base = {
+    claim: state.selectedClaim || state.extract.claim,
+    verdict: state.report.verdict, risk_level: state.report.risk_level,
+    summary: state.report.summary || "", target: $("selTarget").value,
+    sources: state.report.sources || [],
+  };
+  try{
+    const card = await api("/api/card", {...base, style:"elder"}, generation);
+    if (!isCurrentWorkflow(generation)) return;
+    await waitSettle("cardLoading");
+    if (!isCurrentWorkflow(generation)) return;
+    state.card = card;
+    originals.card = cardOriginal(card);
+    state.selfHandled = false;   // 终态互斥：走了卡片路径就收掉结束卡
+    $("endCard").classList.add("hidden");
+    upsertRecord(); saveDraft();
+    renderMainCard();
+    setCardEditable(true);
+    refreshGenCardBtn();
+    $("cardLoading").classList.add("hidden");
+    flipTo(true);   // 非线性翻页：正面处方 → 反面安心卡
+  }catch(e){
+    if (isCurrentWorkflow(generation)) {
+      if (!isCanceledError(e)) showErr("err4", formatRequestError("卡片生成", e));
+    }
+  }finally{
+    waitStop("cardLoading");
+    if (isCurrentWorkflow(generation)) {
+      $("cardLoading").classList.add("hidden");
+      setBusy("cards", "btnGenCard", false);
+    }
+  }
+};
+
+function cardOriginal(c){
+  return { title:c.title||"", greeting:c.greeting||"", fact:c.fact||"",
+    suggestion:c.suggestion||"", self_verify:c.self_verify||"", closing:c.closing||"" };
+}
+function renderMainCard(){
+  const c = state.card || {};
+  if (!originals.card) originals.card = cardOriginal(c);
+  const srcs = (c.sources||[]).slice(0,2).map(s => `${s.publisher||s.title}`).join("　·　");
+  const sec = (field, label, text) => text
+    ? `<div class="ec-sec">${label?`<span class="ec-label">${label}</span><br>`:""}<span class="editable" data-cfield="${field}">${escapeHtml(text)}</span></div>`
+    : "";
+  $("cardMain").innerHTML = `
+    <div class="ec-title editable" data-cfield="title">${escapeHtml(c.title || "安心核验卡")}</div>
+    ${sec("greeting","",c.greeting)}
+    ${sec("fact","事 实",c.fact)}
+    ${sec("suggestion","怎么做",c.suggestion)}
+    ${sec("self_verify","自己动手查",c.self_verify)}
+    ${sec("closing","",c.closing)}
+    ${srcs ? `<div class="ec-src">来源：${escapeHtml(srcs)}</div>` : ""}
+    <div class="ec-notice">${escapeHtml(c.medical_notice || "内容仅供健康信息核验，不能替代医生诊断。")}</div>`;
+  bindCardEditables();
+  icons();
+}
+
+/* ==================== 可编辑二改（AI 草稿 → 人工定稿） ==================== */
+function setCE(el, on){
+  if (!on){ el.contentEditable = "false"; return; }
+  el.contentEditable = "plaintext-only";
+  if (el.contentEditable !== "plaintext-only") el.contentEditable = "true";
+}
+const PLAN_IDS = {opening:"planOpening", fact:"planFact", suggestion:"planSuggestion"};
+function setPlanEditable(on){
+  ["planOpening","planFact","planSuggestion"].forEach(id=>{
+    const el = $(id); if (el) setCE(el, on);
+  });
+  if (on) bindPlanEditables();
+}
+function setCardEditable(on){
+  document.querySelectorAll("#cardMain [data-cfield]").forEach(el => setCE(el, on));
+}
+function syncEditedMarks(){
+  const o = originals.plan;
+  Object.keys(PLAN_IDS).forEach(f=>{
+    const el = $(PLAN_IDS[f]); if (!el) return;
+    el.classList.toggle("edited", !!(o && el.textContent !== (o[f]||"")));
+  });
+  document.querySelectorAll("#cardMain [data-cfield]").forEach(el=>{
+    const f = el.dataset.cfield;
+    el.classList.toggle("edited", !!(originals.card && el.textContent !== (originals.card[f]||"")));
+  });
+}
+function bindPlanEditables(){
+  Object.keys(PLAN_IDS).forEach(f=>{
+    const el = $(PLAN_IDS[f]); if (!el || el._editBound) return;
+    el._editBound = true;
+    el.addEventListener("input", ()=>{
+      const comm = state.plan && state.plan.communication;
+      if (!comm) return;
+      comm[f] = el.textContent;
+      syncEditedMarks(); saveDraft();
+    });
+  });
+}
+function bindCardEditables(){
+  document.querySelectorAll("#cardMain [data-cfield]").forEach(el=>{
+    const f = el.dataset.cfield;
+    el.addEventListener("input", ()=>{
+      if (!state.card) return;
+      state.card[f] = el.textContent;
+      syncEditedMarks(); saveDraft();
+    });
+  });
+}
+$("btnRestorePlan").onclick = () => {
+  if (!originals.plan || !state.plan) return toast("还没有可恢复的原版", "info");
+  Object.assign(state.plan.communication, originals.plan);
+  Object.keys(PLAN_IDS).forEach(f=>{
+    $(PLAN_IDS[f]).textContent = originals.plan[f] || "";
+  });
+  syncEditedMarks(); saveDraft();
+  toast("已恢复 AI 原版", "undo-2");
+};
+$("btnRestoreCard").onclick = () => {
+  if (!originals.card || !state.card) return toast("还没有可恢复的原版", "info");
+  Object.assign(state.card, originals.card);
+  renderMainCard(); setCardEditable(true); saveDraft();
+  toast("已恢复 AI 原版", "undo-2");
+};
+
+$("btnExport").onclick = async () => {
+  if (!state.card) return;
+  const el = $("cardMain");
+  if (document.activeElement) document.activeElement.blur();
+  const back = $("planBack");
+  back.classList.add("exporting");
+  try{
+    if (window.html2canvas){
+      try{
+        const canvas = await html2canvas(el, {scale:2, backgroundColor:"#FAF4EA"});
+        const a = document.createElement("a");
+        a.download = "安心核验卡.png";
+        a.href = canvas.toDataURL("image/png"); a.click();
+        toast("图片已导出，去微信分享给长辈吧", "share-2");
+        return;
+      }catch(e){}
+    }
+    const w = window.open("", "_blank");
+    if (w) w.document.write(`<body style="margin:0;background:#FAF4EA">${el.outerHTML}</body>`);
+    else toast("导出失败，可直接截屏保存卡片", "alert-triangle");
+  }finally{
+    back.classList.remove("exporting");
+  }
+};
+function restart(){
+  advanceWorkflow();
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  clearDerivedState();
+  state.imageData = null;
+  setTab("link");
+  $("inputLink").value = "";
+  $("inputText").value = "";
+  $("inputImage").value = "";
+  $("imgPreview").innerHTML = "";
+  $("selTarget").selectedIndex = 0;
+  $("selRelation").value = "正常";
+  $("inputExtra").value = "";
+  $("extraCount").textContent = "0";
+  currentStep = 1;
+  [1,2,3].forEach(i => $("page"+i).classList.toggle("hidden", i !== 1));
+  renderStepBar();
+  window.scrollTo({top:0, behavior:"smooth"});
+  IDB.del("kv", "draft").catch(()=>{});
+  requestAnimationFrame(()=> revealIn("page1"));
+  toast("已回到首页，可以核验下一条了", "home");
+}
+$("btnGoHome").onclick = restart; $("btnGoHome2").onclick = restart;
+
+/* ==================== 历史记录 ==================== */
+function openDrawer(){ $("drawerMask").classList.remove("hidden"); $("historyDrawer").classList.add("show");
+  requestAnimationFrame(()=> $("drawerMask").classList.add("show")); loadRecords(); }
+function closeDrawer(){ $("drawerMask").classList.remove("show"); $("historyDrawer").classList.remove("show");
+  setTimeout(()=> $("drawerMask").classList.add("hidden"), 400); }
+$("btnHistory").onclick = openDrawer;
+$("btnCloseDrawer").onclick = closeDrawer;
+$("drawerMask").onclick = closeDrawer;
+
+const VMAP = {credible:["基本可信","pill-green"],misleading:["存在误导","pill-red"],uncertain:["暂时无法判断","pill-amber"]};
+async function loadRecords(){
+  let list = [];
+  try{ list = (await IDB.all("records")).sort((a,b)=>b.ts-a.ts); }catch(e){}
+  if (!list.length){
+    $("recordList").innerHTML = `<div class="rec-empty"><i data-lucide="inbox" style="width:34px;height:34px"></i>还没有核验记录</div>`;
+    icons(); return;
+  }
+  $("recordList").innerHTML = list.map(r => {
+    const v = VMAP[(r.report&&r.report.verdict)] || VMAP.uncertain;
+    const d = new Date(r.ts);
+    const when = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+    return `<div class="rec" data-id="${r.id}">
+      <div class="r-claim">${(r.extract&&r.extract.claim)||"未命名"}</div>
+      <div class="r-meta">
+        <span class="pill ${v[1]}" style="padding:2px 9px;font-size:11px">${v[0]}</span>
+        <span><i data-lucide="clock"></i> ${when}</span>
+        <button class="r-del" data-del="${r.id}" aria-label="删除"><i data-lucide="trash-2"></i></button>
+      </div>
+    </div>`;
+  }).join("");
+  icons();
+  document.querySelectorAll(".rec").forEach(el => {
+    el.onclick = async (e) => {
+      if (e.target.closest(".r-del")) return;
+      const rec = await IDB.get("records", +el.dataset.id);
+      if (rec) loadRecord(rec);
+    };
+  });
+  document.querySelectorAll(".r-del").forEach(b => {
+    b.onclick = async () => { await IDB.del("records", +b.dataset.del); loadRecords(); toast("记录已删除","trash-2"); };
+  });
+}
+function loadRecord(rec){
+  advanceWorkflow();
+  clearErrors();
+  state.imageData = null;
+  state.recordId = rec.id;
+  state.extract = rec.extract; state.selectedClaim = rec.selectedClaim || (rec.report&&rec.report.claim) || rec.extract.claim; state.report = rec.report; state.plan = rec.plan;
+  state.card = rec.card || (rec.cards && rec.cards.A) || null;   // 兼容旧记录
+  state.selfHandled = !!rec.selfHandled;
+  originals.plan = rec.planOrig || null;
+  originals.card = rec.cardOrig || (state.card ? cardOriginal(state.card) : null);
+  state.maxStep = Math.min(rec.maxStep || 3, 3);
+  if (rec.target) $("selTarget").value = rec.target;
+  if (rec.relation) $("selRelation").value = rec.relation;
+  if (rec.extra !== undefined) {
+    $("inputExtra").value = rec.extra;
+    $("extraCount").textContent = rec.extra.length;
+  }
+  // 复位各页容器后按记录渲染
+  $("verifyStatusCard").classList.add("hidden");
+  $("relationForm").classList.remove("hidden");
+  $("planResult").classList.toggle("hidden", !state.plan);
+  $("flipInner").classList.remove("flipped");
+  $("cardLoading").classList.add("hidden");
+  $("endCard").classList.add("hidden");
+  restoreStep(3);
+  closeDrawer();
+  goStep(state.plan ? 3 : 2);
+  toast("已载入历史记录", "history");
+}
+
+/* ==================== 设置 & 启动 ==================== */
+function openSettings(){ $("inputApi").value = state.api;
+  $("settingsMask").classList.remove("hidden"); $("settingsModal").classList.add("show");
+  requestAnimationFrame(()=> $("settingsMask").classList.add("show")); }
+function closeSettings(){ $("settingsMask").classList.remove("show"); $("settingsModal").classList.remove("show");
+  setTimeout(()=> $("settingsMask").classList.add("hidden"), 400); }
+$("btnSettings").onclick = openSettings;
+$("settingsMask").onclick = closeSettings;
+$("btnSaveSettings").onclick = () => {
+  state.api = $("inputApi").value.trim().replace(/\/$/,"") || state.api;
+  localStorage.setItem("hhs_api", state.api);
+  closeSettings(); toast("已保存 API 地址", "check");
+};
+
+/* 跑马灯文案 */
+$("marqueeText").innerHTML = ("好好说话 · 安心核验 · 先共情 再说事 · 权威信源 · 大字卡片 · ".repeat(4))
+  .split("·").join('<span style="color:var(--accent)">·</span>') + "&nbsp;";
+
+/* 启动：URL 预填优先，否则恢复本地暂存 */
+(async function boot(){
+  const prefill = readQueryPrefill();
+  try{
+    await IDB.open();
+    if (prefill){
+      applyQueryPrefill(prefill);
+      goStep(1);
+      icons();
+      return;
+    }
+    const draft = await IDB.get("kv", "draft");
+    if (draft && draft.v && draft.v.extract){
+      const v = draft.v;
+      state.recordId = v.recordId; state.maxStep = Math.min(v.maxStep || 2, 3);
+      state.extract = v.extract; state.selectedClaim = v.selectedClaim || (v.report&&v.report.claim) || v.extract.claim; state.report = v.report; state.plan = v.plan;
+      state.card = v.card || (v.cards && v.cards.A) || null;   // 兼容旧草稿
+      state.selfHandled = !!v.selfHandled;
+      originals.plan = v.planOrig || null;
+      originals.card = v.cardOrig || null;
+      if (v.target) $("selTarget").value = v.target;
+      if (v.relation) $("selRelation").value = v.relation;
+      if (v.extra) {
+        $("inputExtra").value = v.extra;
+        $("extraCount").textContent = v.extra.length;
+      }
+      $("verifyStatusCard").classList.add("hidden");
+      restoreStep(state.maxStep);
+      goStep(state.maxStep);
+      icons();
+      return;
+    }
+  }catch(e){
+    if (prefill) applyQueryPrefill(prefill);
+  }
+  goStep(1); icons();
+})();
+
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){
+  navigator.serviceWorker.register("./sw.js").catch(()=>{});
+}
+</script>
+</body>
+</html>
