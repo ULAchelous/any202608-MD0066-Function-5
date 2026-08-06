@@ -1,1 +1,0 @@
-"""Haohuoshuo backend demo."""
