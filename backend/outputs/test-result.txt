@@ -1,0 +1,243 @@
+{"timestamp":"2026-08-05T14:33:06.992+00:00","level":"info","logger":"haohuoshuo.api","event":"request.started","request_id":"902e78e3ad49407b84e4ef5d2444fa3f","method":"GET","route":"/health"}
+{"timestamp":"2026-08-05T14:33:07.034+00:00","level":"info","logger":"haohuoshuo.api","event":"request.completed","request_id":"902e78e3ad49407b84e4ef5d2444fa3f","method":"GET","route":"/health","status_code":200,"elapsed_ms":42.35}
+
+===== GET /health =====
+{
+  "status": "ok",
+  "ffmpeg_available": true,
+  "luna_configured": false,
+  "tavily_configured": false,
+  "exa_configured": false,
+  "mock_mode": true,
+  "card_rendering_available": true,
+  "api_version": "5.0.0-preview",
+  "model_routes": {
+    "text": "MockLunaProvider",
+    "image": "MockLunaProvider",
+    "wechat_article": "MockLunaProvider",
+    "wechat_video": "extract_frames -> MockLunaProvider",
+    "verification_search": "mock"
+  }
+}
+{"timestamp":"2026-08-05T14:33:07.038+00:00","level":"info","logger":"haohuoshuo.api","event":"request.started","request_id":"3b490acb645a473dbbd175703ad69c26","method":"POST","route":"/api/extract"}
+{"timestamp":"2026-08-05T14:33:07.039+00:00","level":"info","logger":"haohuoshuo.service","event":"input.dispatched","request_id":"3b490acb645a473dbbd175703ad69c26","input_type":"text","source_kind":"text","content_length":44,"has_text":false,"has_video":false,"video_count":0,"elapsed_ms":0.02}
+{"timestamp":"2026-08-05T14:33:07.040+00:00","level":"info","logger":"haohuoshuo.service","event":"extract.completed","request_id":"3b490acb645a473dbbd175703ad69c26","source_kind":"text","model_provider":"MockLunaProvider","model_name":"gpt-5.6-luna","claim_count":1,"elapsed_ms":0.58,"mock_provider":true}
+{"timestamp":"2026-08-05T14:33:07.040+00:00","level":"info","logger":"haohuoshuo.api","event":"request.completed","request_id":"3b490acb645a473dbbd175703ad69c26","method":"POST","route":"/api/extract","status_code":200,"elapsed_ms":2.35}
+
+===== POST /api/extract (text) =====
+{
+  "claim": "隔夜菜一定会致癌，专家紧急提醒：赶紧倒掉，为了孩子和父母的健康，马上转给你爱的人",
+  "claims": [
+    {
+      "claim": "隔夜菜一定会致癌，专家紧急提醒：赶紧倒掉，为了孩子和父母的健康，马上转给你爱的人",
+      "evidence": "隔夜菜一定会致癌，专家紧急提醒：赶紧倒掉，为了孩子和父母的健康，马上转给你爱的人",
+      "risk_hint": "high"
+    }
+  ],
+  "original_evidence": [
+    "隔夜菜一定会致癌，专家紧急提醒：赶紧倒掉，为了孩子和父母的健康，马上转给你爱的人"
+  ],
+  "patterns": [
+    "夸大因果",
+    "恐惧驱动",
+    "冒用权威",
+    "情感绑架"
+  ],
+  "topic_summary": "",
+  "search_keywords": [],
+  "audience": "",
+  "emotional_tone": "",
+  "visual_notes": "",
+  "article_title": null,
+  "article_author": null,
+  "source_kind": "text",
+  "video_id": null
+}
+{"timestamp":"2026-08-05T14:33:07.043+00:00","level":"info","logger":"haohuoshuo.api","event":"request.started","request_id":"89723c6ce06540a2a02884d3363a97e3","method":"POST","route":"/api/verify"}
+{"timestamp":"2026-08-05T14:33:07.043+00:00","level":"info","logger":"haohuoshuo.service","event":"tool.call.started","request_id":"89723c6ce06540a2a02884d3363a97e3","tool":"authority_search","provider":"mock","claim_length":40}
+{"timestamp":"2026-08-05T14:33:07.044+00:00","level":"info","logger":"haohuoshuo.service","event":"tool.call.completed","request_id":"89723c6ce06540a2a02884d3363a97e3","tool":"authority_search","provider":"mock","result_count":2,"elapsed_ms":0.11,"mock_provider":true}
+{"timestamp":"2026-08-05T14:33:07.044+00:00","level":"info","logger":"haohuoshuo.service","event":"verification.completed","request_id":"89723c6ce06540a2a02884d3363a97e3","model_provider":"MockLunaProvider","model_name":"gpt-5.6-luna","source_count":2,"verdict":"misleading","risk_level":"medium","elapsed_ms":0.23,"mock_provider":true}
+{"timestamp":"2026-08-05T14:33:07.044+00:00","level":"info","logger":"haohuoshuo.api","event":"request.completed","request_id":"89723c6ce06540a2a02884d3363a97e3","method":"POST","route":"/api/verify","status_code":200,"elapsed_ms":1.33}
+
+===== POST /api/verify =====
+{
+  "claim": "隔夜菜一定会致癌，专家紧急提醒：赶紧倒掉，为了孩子和父母的健康，马上转给你爱的人",
+  "verdict": "misleading",
+  "risk_level": "medium",
+  "summary": "（离线演示结果）该说法包含「夸大因果、恐惧驱动、冒用权威、情感绑架」特征，建议参考权威机构来源进一步核实。",
+  "patterns": [
+    "夸大因果",
+    "恐惧驱动",
+    "冒用权威",
+    "情感绑架"
+  ],
+  "sources": [
+    {
+      "title": "关于「隔夜菜一定会致癌，专家紧急提醒：赶紧倒掉」的科学解读（演示数据）",
+      "url": "https://www.nhc.gov.cn/example/demo-evidence",
+      "publisher": "nhc.gov.cn",
+      "evidence": "离线演示占位证据：真实模式下此处为 Tavily 检索到的权威机构网页摘要。",
+      "authority_level": "other",
+      "authority_label": "其他来源",
+      "published_at": ""
+    },
+    {
+      "title": "健康谣言识别与辟谣指南（演示数据）",
+      "url": "https://www.chinacdc.cn/example/demo-guide",
+      "publisher": "chinacdc.cn",
+      "evidence": "离线演示占位证据：配置 TAVILY_API_KEY 后将替换为真实检索结果。",
+      "authority_level": "other",
+      "authority_label": "其他来源",
+      "published_at": ""
+    }
+  ],
+  "communication": {
+    "channel": "private_chat",
+    "reason": "根据关系状态选择沟通渠道（离线演示）",
+    "opening": "妈，我知道你是担心我们的健康，看到这种消息肯定想第一时间提醒我们。",
+    "fact": "「隔夜菜一定会致癌，专家紧急提醒：赶紧倒掉，为了孩子和父母的健康，马上转给你爱的人」这个说法把一些有条件的风险说得太绝对了。",
+    "suggestion": "我把权威机构的说明找给你看，以后咱们先核实再转发，好不好？"
+  },
+  "medical_notice": "内容仅供健康信息核验，不能替代医生诊断。"
+}
+{"timestamp":"2026-08-05T14:33:07.046+00:00","level":"info","logger":"haohuoshuo.api","event":"request.started","request_id":"d7837e0d0d014d0e88744e89868e7aa9","method":"POST","route":"/api/card"}
+{"timestamp":"2026-08-05T14:33:07.047+00:00","level":"info","logger":"haohuoshuo.service","event":"card.completed","request_id":"d7837e0d0d014d0e88744e89868e7aa9","model_provider":"MockLunaProvider","model_name":"gpt-5.6-luna","style":"elder","source_count":2,"elapsed_ms":0.02,"mock_provider":true}
+{"timestamp":"2026-08-05T14:33:07.047+00:00","level":"info","logger":"haohuoshuo.api","event":"request.completed","request_id":"d7837e0d0d014d0e88744e89868e7aa9","method":"POST","route":"/api/card","status_code":200,"elapsed_ms":1.5}
+
+===== POST /api/card (elder) =====
+{
+  "title": "安心核验卡：这条说法不太准确",
+  "greeting": "妈，我知道你发这个是为了我们好，怕我们吃出不健康。",
+  "fact": "（离线演示结果）该说法包含「夸大因果、恐惧驱动、冒用权威、情感绑架」特征，建议参考权威机构来源进一步核实。",
+  "suggestion": "真正要注意的是剩菜及时放冰箱、吃之前彻底加热，不用整盘倒掉。",
+  "self_verify": "",
+  "closing": "以后看到这种消息先别急着转，我帮你查一查，好吗？",
+  "sources": [
+    {
+      "title": "关于「隔夜菜一定会致癌，专家紧急提醒：赶紧倒掉」的科学解读（演示数据）",
+      "url": "https://www.nhc.gov.cn/example/demo-evidence",
+      "publisher": "nhc.gov.cn",
+      "evidence": "离线演示占位证据：真实模式下此处为 Tavily 检索到的权威机构网页摘要。",
+      "authority_level": "other",
+      "authority_label": "其他来源",
+      "published_at": ""
+    },
+    {
+      "title": "健康谣言识别与辟谣指南（演示数据）",
+      "url": "https://www.chinacdc.cn/example/demo-guide",
+      "publisher": "chinacdc.cn",
+      "evidence": "离线演示占位证据：配置 TAVILY_API_KEY 后将替换为真实检索结果。",
+      "authority_level": "other",
+      "authority_label": "其他来源",
+      "published_at": ""
+    }
+  ],
+  "medical_notice": "内容仅供健康信息核验，不能替代医生诊断。"
+}
+{"timestamp":"2026-08-05T14:33:07.051+00:00","level":"info","logger":"haohuoshuo.api","event":"request.started","request_id":"ebe4a13e887d41ae80694c598ff1fb48","method":"POST","route":"/api/card"}
+{"timestamp":"2026-08-05T14:33:07.052+00:00","level":"info","logger":"haohuoshuo.service","event":"card.completed","request_id":"ebe4a13e887d41ae80694c598ff1fb48","model_provider":"MockLunaProvider","model_name":"gpt-5.6-luna","style":"group_notice","source_count":0,"elapsed_ms":0.03,"mock_provider":true}
+{"timestamp":"2026-08-05T14:33:07.052+00:00","level":"info","logger":"haohuoshuo.api","event":"request.completed","request_id":"ebe4a13e887d41ae80694c598ff1fb48","method":"POST","route":"/api/card","status_code":200,"elapsed_ms":1.13}
+
+===== POST /api/card (group_notice) =====
+{
+  "title": "健康信息小科普：这条说法不太准确",
+  "greeting": "",
+  "fact": "（离线演示结果）该说法包含「夸大因果、恐惧驱动、冒用权威、情感绑架」特征，建议参考权威机构来源进一步核实。",
+  "suggestion": "大家看到类似说法，可以先查一查权威机构发布的信息再决定要不要转发。",
+  "self_verify": "",
+  "closing": "一起维护靠谱的群环境，谢谢理解。",
+  "sources": [],
+  "medical_notice": "内容仅供健康信息核验，不能替代医生诊断。"
+}
+{"timestamp":"2026-08-05T14:33:07.055+00:00","level":"info","logger":"haohuoshuo.api","event":"request.started","request_id":"15658723423a4ef98945cdd414d78443","method":"POST","route":"/api/card/image"}
+{"timestamp":"2026-08-05T14:33:07.056+00:00","level":"info","logger":"haohuoshuo.service","event":"card.completed","request_id":"15658723423a4ef98945cdd414d78443","model_provider":"MockLunaProvider","model_name":"gpt-5.6-luna","style":"elder","source_count":2,"elapsed_ms":0.02,"mock_provider":true}
+{"timestamp":"2026-08-05T14:33:07.308+00:00","level":"info","logger":"haohuoshuo.service","event":"card.image.completed","request_id":"15658723423a4ef98945cdd414d78443","style":"elder","width":750,"height":1420,"byte_size":192976,"scale":2}
+{"timestamp":"2026-08-05T14:33:07.309+00:00","level":"info","logger":"haohuoshuo.api","event":"request.completed","request_id":"15658723423a4ef98945cdd414d78443","method":"POST","route":"/api/card/image","status_code":200,"elapsed_ms":254.56}
+
+===== POST /api/card/image (elder) =====
+{
+  "card": {
+    "title": "安心核验卡：这条说法不太准确",
+    "greeting": "妈，我知道你发这个是为了我们好，怕我们吃出不健康。",
+    "fact": "（离线演示结果）该说法包含「夸大因果、恐惧驱动、冒用权威、情感绑架」特征，建议参考权威机构来源进一步核实。",
+    "suggestion": "真正要注意的是剩菜及时放冰箱、吃之前彻底加热，不用整盘倒掉。",
+    "self_verify": "",
+    "closing": "以后看到这种消息先别急着转，我帮你查一查，好吗？",
+    "sources": [
+      {
+        "title": "关于「隔夜菜一定会致癌，专家紧急提醒：赶紧倒掉」的科学解读（演示数据）",
+        "url": "https://www.nhc.gov.cn/example/demo-evidence",
+        "publisher": "nhc.gov.cn",
+        "evidence": "离线演示占位证据：真实模式下此处为 Tavily 检索到的权威机构网页摘要。",
+        "authority_level": "other",
+        "authority_label": "其他来源",
+        "published_at": ""
+      },
+      {
+        "title": "健康谣言识别与辟谣指南（演示数据）",
+        "url": "https://www.chinacdc.cn/example/demo-guide",
+        "publisher": "chinacdc.cn",
+        "evidence": "离线演示占位证据：配置 TAVILY_API_KEY 后将替换为真实检索结果。",
+        "authority_level": "other",
+        "authority_label": "其他来源",
+        "published_at": ""
+      }
+    ],
+    "medical_notice": "内容仅供健康信息核验，不能替代医生诊断。"
+  },
+  "style": "elder",
+  "mime_type": "image/png",
+  "filename": "安心核验卡-A.png",
+  "width": 750,
+  "height": 1420,
+  "byte_size": 192976,
+  "sha256": "d03d6f1546c38b218038917ebc24d42d88e990c4c14a54a8324c584a966c7d6c"
+}
+{"timestamp":"2026-08-05T14:33:07.315+00:00","level":"info","logger":"haohuoshuo.api","event":"request.started","request_id":"1bd9c1b8591b4080bd1ca691b4d5824b","method":"POST","route":"/api/card/image"}
+{"timestamp":"2026-08-05T14:33:07.316+00:00","level":"info","logger":"haohuoshuo.service","event":"card.completed","request_id":"1bd9c1b8591b4080bd1ca691b4d5824b","model_provider":"MockLunaProvider","model_name":"gpt-5.6-luna","style":"group_notice","source_count":2,"elapsed_ms":0.02,"mock_provider":true}
+{"timestamp":"2026-08-05T14:33:07.537+00:00","level":"info","logger":"haohuoshuo.service","event":"card.image.completed","request_id":"1bd9c1b8591b4080bd1ca691b4d5824b","style":"group_notice","width":750,"height":1314,"byte_size":164711,"scale":2}
+{"timestamp":"2026-08-05T14:33:07.538+00:00","level":"info","logger":"haohuoshuo.api","event":"request.completed","request_id":"1bd9c1b8591b4080bd1ca691b4d5824b","method":"POST","route":"/api/card/image","status_code":200,"elapsed_ms":222.58}
+
+===== POST /api/card/image (group_notice) =====
+{
+  "card": {
+    "title": "健康信息小科普：这条说法不太准确",
+    "greeting": "",
+    "fact": "（离线演示结果）该说法包含「夸大因果、恐惧驱动、冒用权威、情感绑架」特征，建议参考权威机构来源进一步核实。",
+    "suggestion": "大家看到类似说法，可以先查一查权威机构发布的信息再决定要不要转发。",
+    "self_verify": "",
+    "closing": "一起维护靠谱的群环境，谢谢理解。",
+    "sources": [
+      {
+        "title": "关于「隔夜菜一定会致癌，专家紧急提醒：赶紧倒掉」的科学解读（演示数据）",
+        "url": "https://www.nhc.gov.cn/example/demo-evidence",
+        "publisher": "nhc.gov.cn",
+        "evidence": "离线演示占位证据：真实模式下此处为 Tavily 检索到的权威机构网页摘要。",
+        "authority_level": "other",
+        "authority_label": "其他来源",
+        "published_at": ""
+      },
+      {
+        "title": "健康谣言识别与辟谣指南（演示数据）",
+        "url": "https://www.chinacdc.cn/example/demo-guide",
+        "publisher": "chinacdc.cn",
+        "evidence": "离线演示占位证据：配置 TAVILY_API_KEY 后将替换为真实检索结果。",
+        "authority_level": "other",
+        "authority_label": "其他来源",
+        "published_at": ""
+      }
+    ],
+    "medical_notice": "内容仅供健康信息核验，不能替代医生诊断。"
+  },
+  "style": "group_notice",
+  "mime_type": "image/png",
+  "filename": "安心核验卡-B.png",
+  "width": 750,
+  "height": 1314,
+  "byte_size": 164711,
+  "sha256": "9d13974ba47e5888d259abd365f4cf0fc00486d37799228a24870b773e684e98"
+}
+{"timestamp":"2026-08-05T14:33:07.542+00:00","level":"info","logger":"haohuoshuo.api","event":"request.started","request_id":"649fe06df31d4bc19c54f081e0b71601","method":"GET","route":"/openapi.json"}
+{"timestamp":"2026-08-05T14:33:07.608+00:00","level":"info","logger":"haohuoshuo.api","event":"request.completed","request_id":"649fe06df31d4bc19c54f081e0b71601","method":"GET","route":"/openapi.json","status_code":200,"elapsed_ms":65.71}
+
+[OK] V5.0 Preview 全链路与 v4 接口兼容性通过（离线 mock 模式）
