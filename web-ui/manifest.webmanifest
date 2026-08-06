@@ -1,0 +1,15 @@
+{
+  "name": "好好说 · 安心核验",
+  "short_name": "好好说",
+  "description": "帮长辈核验健康信息，给出有人情味的沟通方案",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF7EF",
+  "theme_color": "#E8643C",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
